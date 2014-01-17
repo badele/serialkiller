@@ -95,6 +95,14 @@ class SerialKiller(object):
 
         return self._properties['type']
 
+    @property
+    def title(self):
+        """Get title"""
+        if 'title' not in self.properties:
+            return ''
+
+        return self._properties['title']
+
     def __del__(self):
         # Close file before destroy this object
         if self._file:
@@ -231,7 +239,7 @@ class SerialKiller(object):
             return None
 
         obj = sktypes.newObj(self.type)
-        obj.fromBinary(bline)
+        obj.decodeBinary(bline)
 
         return obj
 
@@ -251,6 +259,13 @@ class SerialKiller(object):
                 obj = self.readObj(obj.size)
 
         return lasts
+
+    def lastValue(self):
+        result = self.tail(1)
+        if not result:
+            return None
+
+        return result[0]
 
     def importDatas(self, filename, separator=';', preduce=True):
 
@@ -382,25 +397,25 @@ class SerialKillers(object):
 
     def getLastsValue(self):
         lasts = {}
-        for s in self.getSensorsIds():
-            obj = SerialKiller(self._directory, s)
+        for sensor in self.getSensorsIds():
+            obj = SerialKiller(self._directory, sensor)
             p = obj._properties
             v = obj.tail(2)
 
             if v:
                 lsize = len(v)
-                idx = min(1, lsize-1)
-                lasts[s] = {}
-                lasts[s]['type'] = v[idx].type
-                lasts[s]['time'] = v[idx].time
-                lasts[s]['value'] = v[idx].value
-                lasts[s]['text'] = v[idx].convert2text(p)
-                lasts[s]['properties'] = p
-                lasts[s]['unavailable'] = False
+                idx = min(1, lsize - 1)
+                lasts[sensor] = {}
+                lasts[sensor]['type'] = v[idx].type
+                lasts[sensor]['time'] = v[idx].time
+                lasts[sensor]['value'] = v[idx].value
+                lasts[sensor]['text'] = v[idx].convert2text(p)
+                lasts[sensor]['properties'] = p
+                lasts[sensor]['unavailable'] = False
                 if idx > 0:
-                    lasts[s]['since'] = v[1].time - v[0].time
+                    lasts[sensor]['since'] = v[1].time - v[0].time
                 else:
-                    lasts[s]['since'] = None
+                    lasts[sensor]['since'] = None
 
                 # Check if unavailable data
                 unavailable = 600
@@ -408,9 +423,9 @@ class SerialKillers(object):
                     unavailable = float(p['unavailable'])
 
                 now = time.time()
-                delta = now - lasts[s]['time']
+                delta = now - lasts[sensor]['time']
                 if delta  >= unavailable:
-                    lasts[s]['unavailable'] = True
+                    lasts[sensor]['unavailable'] = True
 
                 # check limitation state
                 state = ''
@@ -418,13 +433,13 @@ class SerialKillers(object):
                 for c in check:
                 # Check crit
                     if not state and 'limit_%s' % c in p:
-                        test = '%s %s' % (lasts[s]['value'], lasts[s]['properties']['limit_%s' % c])
+                        test = '%s %s' % (lasts[sensor]['value'], lasts[sensor]['properties']['limit_%s' % c])
                         res = eval(test)
                         if res:
                             state = '%s' % c
 
                 if state:
-                    lasts[s]['state'] = state
+                    lasts[sensor]['state'] = state
 
         return lasts
 
@@ -445,21 +460,21 @@ class SerialKillers(object):
         lasts = self.getLastsValue()
 
         lines = []
-        for k, v in lasts.iteritems():
+        for sensorid, sensor in lasts.iteritems():
             # Set value
-            if 'title' in v['properties']:
-                title = v['properties']['title']
+            if 'title' in sensor['properties']:
+                title = sensor['properties']['title']
             else:
                 title = ""
-            value = v['value']
-            text = v['text']
-            time = v['time']
+            text = sensor['text']
+            ltime = sensor['time']
             state = ''
-            if v['unavailable']:
+            if sensor['unavailable']:
                 state = 'X'
 
             # Add last value
-            line = [k, state, format_datetime(time), title, text ]
+            print sensor
+            line = [sensorid, state, format_datetime(ltime), title, text ]
             lines.append(line)
 
         header = ['SensorId', 'S', 'Time', 'Title', 'Value']
