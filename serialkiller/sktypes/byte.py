@@ -61,7 +61,7 @@ class byte(default):
         line = struct.pack('=BdB', self.codebin, self.time, self.value)
         return line
 
-    def fromBinary(self, content):
+    def decodeBinary(self, content):
         """Binary to skline"""
 
         (sizes, typeid, datetime, value, sizee) = struct.unpack('=BBdBB', content)

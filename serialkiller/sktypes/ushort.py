@@ -54,7 +54,7 @@ class ushort(default):
         line = struct.pack('=BdH', self.codebin, self.time, self.value)
         return line
 
-    def fromBinary(self, content):
+    def decodeBinary(self, content):
         """Binary to skline"""
 
         (sizes, typeid, datetime, value, sizee) = struct.unpack('=BBdHB', content)

@@ -90,6 +90,11 @@ class default(object):
         self.checkParams()
 
     @property
+    def text(self):
+        """Get text"""
+        return self._params['text']
+
+    @property
     def time(self):
         """Get Time"""
         return self._params['time']
@@ -127,7 +132,7 @@ class default(object):
         mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
         raise NotImplementedError(mess)
 
-    def fromBinary(self, content):
+    def decodeBinary(self, content):
         """Convert from Binary"""
         mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
         raise NotImplementedError(mess)
