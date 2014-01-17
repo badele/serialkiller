@@ -1,0 +1,5 @@
+include README.rst
+include LICENSE
+include tests.py
+include serialkiller/sk_server.cfg
+include serialkiller/server/templates/*
