@@ -37,9 +37,10 @@ def addEvent(args):
 
 def getLastsValue(args):
     obj = lib.SerialKiller(args.directory, args.sensorid)
-    result = obj.tail(1)
+
+    result = obj.lastValue()
     if result:
-        print result[0].value
+        print result.value
 
 
 def sensorDatas(args):
