@@ -25,6 +25,7 @@
           <th>SensorId</th>
           <th>Type</th>
           <th>Date</th>
+          <th>Since</th>
           <th>Title</th>
           <th>Value</th>
         </tr>
@@ -39,6 +40,7 @@
           {% else %}
           <td><span class="label label-info">{{ v['time']|datetime }}</span></td>
 {% endif %}
+          <td>{{ v['since']|sincetime }}</td>
           <td>{{ v['properties']['title'] }}</td>
           {% if state[v['state']] %}
           <td><span class="label label-{{state[v['state']]}}">{{ v['text'] }}</span></td>

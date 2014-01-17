@@ -385,16 +385,22 @@ class SerialKillers(object):
         for s in self.getSensorsIds():
             obj = SerialKiller(self._directory, s)
             p = obj._properties
-            v = obj.tail(1)
+            v = obj.tail(2)
 
             if v:
+                lsize = len(v)
+                idx = min(1, lsize-1)
                 lasts[s] = {}
-                lasts[s]['type'] = v[0].type
-                lasts[s]['time'] = v[0].time
-                lasts[s]['value'] = v[0].value
-                lasts[s]['text'] = v[0].convert2text(p)
+                lasts[s]['type'] = v[idx].type
+                lasts[s]['time'] = v[idx].time
+                lasts[s]['value'] = v[idx].value
+                lasts[s]['text'] = v[idx].convert2text(p)
                 lasts[s]['properties'] = p
                 lasts[s]['unavailable'] = False
+                if idx > 0:
+                    lasts[s]['since'] = v[1].time - v[0].time
+                else:
+                    lasts[s]['since'] = None
 
                 # Check if unavailable data
                 unavailable = 600
@@ -472,6 +478,7 @@ class SerialKillers(object):
             loader=jinja2.FileSystemLoader(searchpath="/")
         )
         tplenv.filters['datetime'] = format_datetime
+        tplenv.filters['sincetime'] = format_since
 
         template = tplenv.get_template(os.path.abspath(tplfile))
 
@@ -503,3 +510,32 @@ class SerialKillers(object):
 
 def format_datetime(value, fmt='%Y-%m-%d %H:%M:%S'):
     return format(datetime.fromtimestamp(value), fmt)
+
+
+def format_since(delta):
+    if not delta or delta < 0:
+        return "Unknow"
+
+    delta = int(delta)
+
+    if delta < 10:
+        return "just now"
+    if delta < 60:
+        return str(delta) + " seconds ago"
+    if delta < 120:
+        return "a minute ago"
+    if delta < 3600:
+        return str(delta / 60) + " minutes ago"
+    if delta < 7200:
+        return "an hour ago"
+    if delta < 86400:
+        return str(delta / 3600) + " hours ago"
+
+    if delta < 172800:
+        return "Yesterday"
+    if delta < 2678400:
+        return str(delta / 86400) + " days ago"
+    if delta < 31536000:
+        return str(delta / 2678400) + " months ago"
+
+    return str(delta / 31536000) + " years ago"
