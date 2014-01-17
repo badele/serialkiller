@@ -19,7 +19,7 @@ from serialkiller import sktypes
 
 def addValue(args):
     checkRequireValueAndType(args)
-    obj = lib.SerialKiller(args.directory, args.sensorid, args.type)
+    obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
     data = sktypes.newObj(args.type, **params)
@@ -28,7 +28,7 @@ def addValue(args):
 
 def addEvent(args):
     checkRequireValueAndType(args)
-    obj = lib.SerialKiller(args.directory, args.sensorid, args.type)
+    obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
     data = sktypes.newObj(args.type, **params)
@@ -36,7 +36,7 @@ def addEvent(args):
 
 
 def getLastsValue(args):
-    obj = lib.SerialKiller(args.directory, args.sensorid)
+    obj = lib.Sensor(args.directory, args.sensorid)
 
     result = obj.lastValue()
     if result:
@@ -45,7 +45,7 @@ def getLastsValue(args):
 
 def sensorDatas(args):
 
-    obj = lib.SerialKiller(args.directory, args.sensorid)
+    obj = lib.Sensor(args.directory, args.sensorid)
     params = extractParams(args)
 
     if 'tail' not in params:
@@ -65,7 +65,7 @@ def sensorDatas(args):
 
 def setProperty(args):
     checkRequireValueAndType(args)
-    obj = lib.SerialKiller(args.directory, args.sensorid, args.type)
+    obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
     obj.setProperties(**params)
@@ -80,7 +80,7 @@ def importSensorIds(args):
         sys.exit(1)
         return
 
-    obj = lib.SerialKiller(args.directory, args.sensorid, args.type)
+    obj = lib.Sensor(args.directory, args.sensorid, args.type)
     imported = obj.importDatas(params['filename'])
     print "%s lines imported" % imported
 
@@ -94,12 +94,12 @@ def generateGraphs(args):
     if 'tail' not in params:
         params['tail'] = 50
 
-    obj = lib.SerialKillers(args.directory)
+    obj = lib.Sensor(args.directory)
     lasts = obj.getLastsValue()
 
     for k, v in lasts.iteritems():
         print "generate graphs for %s" % k
-        gen = lib.SerialKiller(args.directory, k)
+        gen = lib.Sensor(args.directory, k)
         content = gen.convertSensorDatas2Html(**params)
 
         filename = "%s/%s.html" % (params['directory'], k)

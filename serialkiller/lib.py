@@ -29,7 +29,7 @@ def saveto(filename, content):
     out.close()
 
 
-class SerialKiller(object):
+class Sensor(object):
     def __init__(self, directory, sensorid, type='byte', ext=".data"):
         # Check sensorid param
         ids = sensorid.split(':')
@@ -398,7 +398,7 @@ class SerialKillers(object):
     def getLastsValue(self):
         lasts = {}
         for sensor in self.getSensorsIds():
-            obj = SerialKiller(self._directory, sensor)
+            obj = Sensor(self._directory, sensor)
             p = obj._properties
             v = obj.tail(2)
 

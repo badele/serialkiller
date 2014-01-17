@@ -50,7 +50,7 @@ def listLastsSensor():
 @app.route('/api/%s/addEvent/<sensorid>/<type>/<values>' % __apiversion__, methods=['GET'])
 def addEvent(sensorid, type, values):
     """Add a new event, no deduplicate"""
-    obj = lib.SerialKiller(app.config['STORAGE'], sensorid, type)
+    obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
     params = dict(urlparse.parse_qsl(values))
     data = sktypes.newObj(type, **params)
     obj.addEvent(data)
@@ -60,7 +60,7 @@ def addEvent(sensorid, type, values):
 @app.route('/api/%s/addValue/<sensorid>/<type>/<values>' % __apiversion__, methods=['GET'])
 def addValue(sensorid, type, values):
     """Add a new value, deduplicate line"""
-    obj = lib.SerialKiller(app.config['STORAGE'], sensorid, type)
+    obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
     params = dict(urlparse.parse_qsl(values))
     data = sktypes.newObj(type, **params)
     obj.addValue(data)
@@ -70,7 +70,7 @@ def addValue(sensorid, type, values):
 @app.route('/api/%s/sensor/<sensorid>' % __apiversion__, methods=['GET'])
 def SensorDatas(sensorid):
     """List all last sensors"""
-    obj = lib.SerialKiller(app.config['STORAGE'], sensorid)
+    obj = lib.Sensor(app.config['STORAGE'], sensorid)
     content = obj.convertSensorDatasTo(format='html', tail=100)
     return content
 
