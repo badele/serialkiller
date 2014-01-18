@@ -30,7 +30,7 @@ class default(object):
     def __init__(self, **kwargs):
 
         # Set parameters
-        self._params = kwargs
+        self._metadata = kwargs
 
         if 'time' not in kwargs:
             self.time = None
@@ -39,7 +39,7 @@ class default(object):
             self.value = None
 
         # Check if parameters is correct
-        self.checkParams()
+        self.checkMetadata()
 
         self._codebin = 0x0
         self._defaultproperties = {
@@ -66,45 +66,80 @@ class default(object):
         return self._codebin
 
     @property
-    def params(self):
-        """Get Value"""
-        return self._params
-
-    @params.setter
-    def params(self, value):
-        self._params = value
-
-    @property
-    def size(self):
-        """Get Obj size"""
-        return self._params['size']
-
-    @property
     def value(self):
         """Get Value"""
-        return self._params['value']
+        return self.returnMetadata('value')
 
     @value.setter
-    def value(self, value):
-        self._params['value'] = value
-        self.checkParams()
-
-    @property
-    def text(self):
-        """Get text"""
-        return self._params['text']
+    def value(self, pvalue):
+        self._metadata['value'] = pvalue
+        self.checkMetadata()
 
     @property
     def time(self):
         """Get Time"""
-        return self._params['time']
+        return self.returnMetadata('time')
 
     @time.setter
     def time(self, value):
         if value:
-            self._params['time'] = float(value)
+            self._metadata['time'] = float(value)
         else:
-            self._params['time'] = time.time()
+            self._metadata['time'] = time.time()
+
+    @property
+    def metadata(self):
+        """Get Value"""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, value):
+        self._metadata = value
+
+    # =======================
+    # Get Metadata properties
+    # =======================
+    @property
+    def size(self):
+        """Get Obj size"""
+        return self.returnMetadata('size')
+
+    @property
+    def state(self):
+        """Get Value"""
+        return self.returnMetadata('state')
+
+    @property
+    def unavailable(self):
+        """Get Value"""
+        return self.returnMetadata('unavailable')
+
+    @property
+    def text(self):
+        """Get text"""
+        return self.returnMetadata('text')
+
+    # =======================
+    # Get Metadata properties
+    # =======================
+
+    @state.setter
+    def state(self, value):
+        self._metadata['state'] = value
+
+    @unavailable.setter
+    def unavailable(self, value):
+        self._metadata['unavailable'] = value
+
+    @text.setter
+    def text(self, value):
+        self._metadata['text'] = value
+
+    def returnMetadata(self, metadataname):
+        if metadataname not in self._metadata:
+            return None
+
+        return self._metadata[metadataname]
 
     def toBinary(self):
         """Convert to Binary"""
@@ -115,11 +150,11 @@ class default(object):
 
         return bline
 
-    def checkParams(self):
+    def checkMetadata(self):
         #Check time format
-        if 'time' in self.params:
+        if 'time' in self.metadata:
             if type(self.time) == str:
-                self.params['time'] = float(self.time)
+                self.time = float(self.time)
 
     def convert2text(self, textconverter):
         if 'convert' not in textconverter:

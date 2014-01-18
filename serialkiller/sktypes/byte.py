@@ -50,11 +50,11 @@ class byte(default):
     @default.value.setter
     def value(self, value):
         if value:
-            self._params['value'] = int(value)
+            self._metadata['value'] = int(value)
         else:
-            self._params['value'] = value
+            self._metadata['value'] = value
 
-        self.checkParams()
+        self.checkMetadata()
 
     def typeToBinary(self):
         """Convert to Binary"""
@@ -66,23 +66,22 @@ class byte(default):
 
         (sizes, typeid, datetime, value, sizee) = struct.unpack('=BBdBB', content)
 
-        self.params['size'] = sizes
-        self.params['time'] = datetime
-        self.params['value'] = value
+        self.metadata['size'] = sizes
+        self.metadata['time'] = datetime
+        self.metadata['value'] = value
 
-
-    def checkParams(self):
-        super(byte, self).checkParams()
+    def checkMetadata(self):
+        super(byte, self).checkMetadata()
 
         # Check value
         if not self.value:
             return
 
         if type(self.value) == str or type(self.value):
-            self.params['value'] = int(self.value)
+            self.metadata['value'] = int(self.value)
 
         if self.value >= 0 and self.value <= 255:
             return
 
-        print self.params['value']
+        print self.metadata['value']
         raise Exception("Value %s not authorized in %s type" % (self.value, self.type))

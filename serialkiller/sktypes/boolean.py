@@ -40,16 +40,15 @@ class boolean(byte):
         )
         self._defaultproperties = tmpdict
 
-
-    def checkParams(self):
-        super(boolean, self).checkParams()
+    def checkMetadata(self):
+        super(boolean, self).checkMetadata()
 
         # Check value
         if not self.value:
             return
 
         if type(self.value) == str or type(self.value):
-            self.params['value'] = int(self.value)
+            self.metadata['value'] = int(self.value)
 
         if self.value == 0 or self.value == 255:
             return

@@ -41,7 +41,7 @@ class Sensor(object):
         self._sensorid = sensorid
         self._file = None
         self._filename = self.getFilename(ext)
-        self._properties = {}
+        self._configs = {}
 
         # Create node directory
         self.createNodeDirectories()
@@ -59,12 +59,12 @@ class Sensor(object):
         confname = self.getFilename('.conf')
         calctype = None
         if os.path.isfile(confname):
-            self._properties = self.readProperties()
-            calctype = self.properties['type'] 
+            self._configs = self.readConfigs()
+            calctype = self.configs['type'] 
 
         # Not found type in sensor configuration
         if not calctype:
-            self.properties['type'] = type
+            self.configs['type'] = type
             calctype = type
 
         # Try to load type object
@@ -74,7 +74,7 @@ class Sensor(object):
         except ImportError:
             raise Exception("The %s type not exist" % type)
 
-        self._properties = self.readProperties()
+        self._configs = self.readConfigs()
 
     @property
     def sensorid(self):
@@ -82,26 +82,26 @@ class Sensor(object):
         return self._sensorid
 
     @property
-    def properties(self):
-        """Get properties"""
+    def configs(self):
+        """Get configs"""
 
-        return self._properties
+        return self._configs
 
     @property
     def type(self):
         """Get type"""
-        if 'type' not in self.properties:
+        if 'type' not in self.configs:
             raise Exception("No type found")
 
-        return self._properties['type']
+        return self._configs['type']
 
     @property
     def title(self):
         """Get title"""
-        if 'title' not in self.properties:
+        if 'title' not in self.config:
             return ''
 
-        return self._properties['title']
+        return self._config['title']
 
     def __del__(self):
         # Close file before destroy this object
@@ -139,44 +139,44 @@ class Sensor(object):
             else:
                 self.add2Log(obj)
 
-    def completeProperties(self, properties=dict()):
-        """Complete properties list with not seted properties"""
-        for k, v in self._typeobj._defaultproperties.iteritems():
-            if not k in properties and '#%s' % k:
+    def completeConfig(self, configs=dict()):
+        """Complete configs list with not seted configs"""
+        for k, v in self._typeobj._defaultconfigs.iteritems():
+            if not k in configs and '#%s' % k:
                 comment = ''
                 if 'comment' in v and v['comment']:
                     comment = '#'
 
                 if isinstance(v['value'], str):
-                    properties['%s%s' % (comment, k)] = str(v['value']) % {
+                    configs['%s%s' % (comment, k)] = str(v['value']) % {
                         'sensorid': self._sensorid,
                         'type': self.type
                     }
                 else:
-                    properties['%s%s' % (comment, k)] = v['value']
+                    configs['%s%s' % (comment, k)] = v['value']
 
-        return properties
+        return configs
 
-    def readProperties(self):
+    def readConfigs(self):
         # Try open file
         lines = []
         filename = self.getFilename('.conf')
 
-        properties = {}
+        configs = {}
         if os.path.isfile(filename):
             lines = open(filename).read()
-            properties = json.loads(lines)
+            configs = json.loads(lines)
         else:
-            properties = self.completeProperties(properties)
-            self.saveProperties(properties)
+            configs = self.completeConfigs(configs)
+            self.saveProperties(configs)
 
-        return properties
+        return configs
 
-    def saveProperties(self, properties):
+    def saveConfigs(self, configs):
         filename = self.getFilename('.conf')
         with open(filename, 'w') as f:
             jsontext = json.dumps(
-                properties, sort_keys=True,
+                configs, sort_keys=True,
                 indent=4, separators=(',', ': ')
             )
             f.write(jsontext)
@@ -185,21 +185,21 @@ class Sensor(object):
     def setProperty(self, pname, pvalue, savetofile=True):
         commented = '#%s' % pname
         if pvalue:
-            if commented in self._properties:
-                del self._properties[commented]
-            self._properties[pname] = pvalue.strip()
+            if commented in self._configs:
+                del self._configs[commented]
+            self._configs[pname] = pvalue.strip()
         else:
-            if pname in self._properties:
-                self._properties[commented] = self._properties[pname]
+            if pname in self._configs:
+                self._configs[commented] = self._configs[pname]
                 #del self._properties[pname]
 
-        self.saveProperties(self._properties)
+        self.saveConfigs(self._configs)
 
-    def setProperties(self, **kwargs):
+    def setConfigs(self, **kwargs):
         for k, v in kwargs.iteritems():
             self.setProperty(k, v, False)
 
-        self.saveProperties(self._properties)
+        self.saveConfigs(self._configs)
 
     def rewind(self, nb):
 
@@ -243,7 +243,7 @@ class Sensor(object):
 
         return obj
 
-    def tail(self, nb=1):
+    def tail(self, nb=1, addextrainfo=False):
         lasts = []
 
         # No file
@@ -258,6 +258,10 @@ class Sensor(object):
                 lasts.append(obj)
                 obj = self.readObj(obj.size)
 
+        # Complete extra info
+        if addextrainfo:
+            self.addExtraInfo(lasts)
+
         return lasts
 
     def lastValue(self):
@@ -266,6 +270,47 @@ class Sensor(object):
             return None
 
         return result[0]
+
+    def addExtraInfo(self, values):
+        """Add extra infos on a minimal type object"""
+        for idx in range(len(values)):
+            obj = values[idx]
+
+            # Add configs information
+            obj.metadata['configs'] = self.configs
+
+            # Convert value in text
+            obj.text = obj.convert2text(self.configs)
+
+            # Check same value since
+            if idx > 0:
+                obj.since = values[idx].time - values[idx - 1].time
+            else:
+                obj.since = None
+
+            # Check if unavailable data
+            unavailable = 600
+            obj.unavailable = False
+            if 'unavailable' in self.configs:
+                unavailable = float(self.configs['unavailable'])
+
+            now = time.time()
+            delta = now - obj.time
+            obj.unavailable = delta >= unavailable
+
+            # check limitation state
+            obj.state = ''
+            check = ['crit', 'warn', 'succ', 'info', 'unkn']
+            for limitname in check:
+                # Check crit in order 'crit', 'warn', 'succ', 'info', 'unkn'
+                if not obj.metadata['state'] and 'limit_%s' % limitname in self.configs:
+                    test = '%s %s' % (obj.value, self.configs['limit_%s' % limitname])
+                    res = eval(test)
+                    if res:
+                        state = '%s' % limitname
+
+            if state:
+                obj.state = state
 
     def importDatas(self, filename, separator=';', preduce=True):
 
@@ -367,7 +412,7 @@ class Sensor(object):
 
         lines = []
         for r in result:
-            lines.append([format_datetime(r.time), r.convert2text(self.properties)])
+            lines.append([format_datetime(r.time), r.convert2text(self.configs)])
 
         header = ['Time', 'Value']
         return tabulate(lines, headers=header)
@@ -399,47 +444,13 @@ class SerialKillers(object):
         lasts = {}
         for sensor in self.getSensorsIds():
             obj = Sensor(self._directory, sensor)
-            p = obj._properties
-            v = obj.tail(2)
+            v = obj.tail(2, addextrainfo=True)
 
             if v:
                 lsize = len(v)
                 idx = min(1, lsize - 1)
                 lasts[sensor] = {}
-                lasts[sensor]['type'] = v[idx].type
-                lasts[sensor]['time'] = v[idx].time
-                lasts[sensor]['value'] = v[idx].value
-                lasts[sensor]['text'] = v[idx].convert2text(p)
-                lasts[sensor]['properties'] = p
-                lasts[sensor]['unavailable'] = False
-                if idx > 0:
-                    lasts[sensor]['since'] = v[1].time - v[0].time
-                else:
-                    lasts[sensor]['since'] = None
-
-                # Check if unavailable data
-                unavailable = 600
-                if 'unavailable' in p:
-                    unavailable = float(p['unavailable'])
-
-                now = time.time()
-                delta = now - lasts[sensor]['time']
-                if delta  >= unavailable:
-                    lasts[sensor]['unavailable'] = True
-
-                # check limitation state
-                state = ''
-                check = ['crit', 'warn', 'succ', 'info', 'unkn']
-                for c in check:
-                # Check crit
-                    if not state and 'limit_%s' % c in p:
-                        test = '%s %s' % (lasts[sensor]['value'], lasts[sensor]['properties']['limit_%s' % c])
-                        res = eval(test)
-                        if res:
-                            state = '%s' % c
-
-                if state:
-                    lasts[sensor]['state'] = state
+                lasts[sensor] = v[idx]
 
         return lasts
 
@@ -460,21 +471,13 @@ class SerialKillers(object):
         lasts = self.getLastsValue()
 
         lines = []
-        for sensorid, sensor in lasts.iteritems():
-            # Set value
-            if 'title' in sensor['properties']:
-                title = sensor['properties']['title']
-            else:
-                title = ""
-            text = sensor['text']
-            ltime = sensor['time']
+        for sensorid, value in lasts.iteritems():
             state = ''
-            if sensor['unavailable']:
+            if value.unavailable:
                 state = 'X'
 
             # Add last value
-            print sensor
-            line = [sensorid, state, format_datetime(ltime), title, text ]
+            line = [sensorid, state, format_datetime(value.time), value.metadata['configs']['title'], value.text ]
             lines.append(line)
 
         header = ['SensorId', 'S', 'Time', 'Title', 'Value']
