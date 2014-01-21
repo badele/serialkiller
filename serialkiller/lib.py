@@ -349,7 +349,7 @@ class Sensor(object):
         if 'tail' in kwargs:
             tail = int(kwargs['tail'])
 
-        result = self.tail(tail)
+        result = self.tail(tail, addextrainfo=True)
 
         dates = []
         datas = []
@@ -369,6 +369,12 @@ class Sensor(object):
                 else:
                     dates.append('')
             datas.append(r.value)
+
+        mydatas = []
+        for r in result:
+            mydatas.append(r.metadata)
+
+        jsondatas = json.dumps(mydatas, separators=(',', ': '))
 
         pydir = os.path.dirname(os.path.realpath(__file__))
         tplfile = '%s/server/templates/sensordatas.tpl' % pydir
@@ -390,6 +396,7 @@ class Sensor(object):
                 'lasts': result,
                 'dates': dates,
                 'datas': datas,
+                'mydatas': jsondatas,
                 'generated_time': time.time(),
                 'state': {
                     'info': 'info',
