@@ -101,7 +101,7 @@ class Sensor(object):
         if 'title' not in self.config:
             return ''
 
-        return self._config['title']
+        return self.configs['title']
 
     def __del__(self):
         # Close file before destroy this object
@@ -243,7 +243,7 @@ class Sensor(object):
 
         return obj
 
-    def tail(self, nb=1, addextrainfo=False):
+    def tail(self, nb=1, addmetainfo=False):
         lasts = []
 
         # No file
@@ -259,8 +259,8 @@ class Sensor(object):
                 obj = self.readObj(obj.size)
 
         # Complete extra info
-        if addextrainfo:
-            self.addExtraInfo(lasts)
+        if addmetainfo:
+            self.addMetaInfo(lasts)
 
         return lasts
 
@@ -271,7 +271,7 @@ class Sensor(object):
 
         return result[0]
 
-    def addExtraInfo(self, values):
+    def addMetaInfo(self, values):
         """Add extra infos on a minimal type object"""
         for idx in range(len(values)):
             obj = values[idx]
@@ -349,7 +349,7 @@ class Sensor(object):
         if 'tail' in kwargs:
             tail = int(kwargs['tail'])
 
-        result = self.tail(tail, addextrainfo=True)
+        result = self.tail(tail, addmetainfo=True)
 
         dates = []
         datas = []
@@ -451,7 +451,7 @@ class SerialKillers(object):
         lasts = {}
         for sensor in self.getSensorsIds():
             obj = Sensor(self._directory, sensor)
-            v = obj.tail(2, addextrainfo=True)
+            v = obj.tail(2, addmetainfo=True)
 
             if v:
                 lsize = len(v)

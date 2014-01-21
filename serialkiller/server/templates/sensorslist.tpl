@@ -34,14 +34,14 @@
       {% for k, v in lasts.items() %}
         <tr>
           <td><a href="/{{ k }}.html">{{ k }}</a></td>
-          <td>{{ v['properties']['type'] }}</td>
+          <td>{{ v.type }}</td>
           {% if v['unavailable'] %}
           <td><span class="label label-danger">{{ v['time']|datetime }}</span></td>
           {% else %}
           <td><span class="label label-info">{{ v['time']|datetime }}</span></td>
 {% endif %}
           <td>{{ v['since']|sincetime }}</td>
-          <td>{{ v['properties']['title'] }}</td>
+          <td>{{ v.metadata['configs']['title'] }}</td>
           {% if state[v['state']] %}
           <td><span class="label label-{{state[v['state']]}}">{{ v['text'] }}</span></td>
           {% else %}
