@@ -71,7 +71,7 @@ rect.pane {
     </style>
 
     <script>
-var data = {{mydatas}};
+var datas = {{datas}};
 
 // Calc margin
 var margin = {top: 60, right: 60, bottom: 60, left:60},
@@ -136,12 +136,12 @@ svg.append("g")
     .attr("transform", "translate(0," + height + ")");
 
 svg.append("path")
-        .datum(data)
+        .datum(datas)
         .attr("class", "area")
         .attr("clip-path", "url(#clip)");
 
 svg.append("path")
-    .datum(data)
+    .datum(datas)
     .attr("class", "line")
     .attr("clip-path", "url(#clip)");
 
@@ -151,8 +151,8 @@ svg.append("rect")
     .attr("height", height)
     .call(zoom);
 
-x.domain(d3.extent(data, function(d) { return d.time * 1000 ;}));
-y.domain(d3.extent(data, function(d) { return d.value ;}));
+x.domain(d3.extent(datas, function(d) { return d.time * 1000 ;}));
+y.domain(d3.extent(datas, function(d) { return d.value ;}));
 
 zoom.x(x);
 draw();
