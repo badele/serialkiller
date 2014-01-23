@@ -36,11 +36,15 @@ def addEvent(args):
 
 
 def getLastsValue(args):
-    obj = lib.Sensor(args.directory, args.sensorid)
+    params = extractParams(args)
 
-    result = obj.lastValue()
-    if result:
-        print result.value
+    if 'tail' not in params:
+        params['tail'] = 1
+
+    obj = lib.Sensor(args.directory, args.sensorid)
+    obj.tail(nb=params['tail'])
+
+    return obj.datas
 
 
 def sensorDatas(args):
@@ -89,21 +93,21 @@ def importSensorIds(args):
 def generateGraphs(args):
     params = extractParams(args)
     if 'directory' not in params:
-        print("Please set directory value")
+        print("Please set -v directory=")
         sys.exit(1)
 
     if 'tail' not in params:
         params['tail'] = 50
 
-    obj = lib.Sensor(args.directory)
-    lasts = obj.getLastsValue()
+    obj = lib.SerialKillers(args.directory)
+    sensorsids = obj.getSensorsIds()
 
-    for k, v in lasts.iteritems():
-        print "generate graphs for %s" % k
-        gen = lib.Sensor(args.directory, k)
+    for sensorid in sensorsids:
+        print "generate graphs for %s" % sensorid
+        gen = lib.Sensor(args.directory, sensorid)
         content = gen.convertSensorDatas2Html(**params)
 
-        filename = "%s/%s.html" % (params['directory'], k)
+        filename = "%s/%s.html" % (params['directory'], sensorid)
         lib.saveto(filename, content.encode('utf-8'))
 
 
