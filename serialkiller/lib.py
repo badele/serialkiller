@@ -39,6 +39,7 @@ class Sensor(object):
         # Init fields
         self._directory = directory
         self._sensorid = sensorid
+        self._datas = []
         self._file = None
         self._filename = self.getFilename(ext)
         self._configs = {}
@@ -60,7 +61,7 @@ class Sensor(object):
         calctype = None
         if os.path.isfile(confname):
             self._configs = self.readConfigs()
-            calctype = self.configs['type'] 
+            calctype = self.configs['type']
 
         # Not found type in sensor configuration
         if not calctype:
@@ -80,6 +81,12 @@ class Sensor(object):
     def sensorid(self):
         """Get sensorid"""
         return self._sensorid
+
+    @property
+    def datas(self):
+        """Get datas"""
+
+        return self._datas
 
     @property
     def configs(self):
@@ -129,11 +136,11 @@ class Sensor(object):
         self.add2Log(obj)
 
     def addValue(self, obj):
-        lasts = self.tail(2)
-        if len(lasts) < 2:
+        self.tail(2)
+        if len(self.datas) < 2:
             self.add2Log(obj)
         else:
-            if obj.value == lasts[0].value and obj.value == lasts[1].value:
+            if obj.value == self.datas[0].value and obj.value == self.datas[1].value:
                 self.rewind(1)
                 self._file.write(obj.toBinary())
             else:
@@ -244,32 +251,34 @@ class Sensor(object):
         return obj
 
     def tail(self, nb=1, addmetainfo=False):
-        lasts = []
+        self._datas = []
 
         # No file
         if not self._file:
-            return lasts
+            return 0
+
+        nb = int(nb)
 
         # Read the nb skline
         sizetoread = self.rewind(nb)
         if sizetoread:
             obj = self.readObj(sizetoread)
             while obj:
-                lasts.append(obj)
+                self._datas.append(obj)
                 obj = self.readObj(obj.size)
 
         # Complete extra info
         if addmetainfo:
-            self.addMetaInfo(lasts)
+            self.addMetaInfo(self.datas)
 
-        return lasts
+        return 0
 
-    def lastValue(self):
-        result = self.tail(1)
-        if not result:
+    def last(self):
+        size = len(self.datas)
+        if size <= 0:
             return None
 
-        return result[0]
+        return self.datas[size - 1]
 
     def addMetaInfo(self, values):
         """Add extra infos on a minimal type object"""
@@ -312,6 +321,14 @@ class Sensor(object):
             if state:
                 obj.state = state
 
+    def datasToJSON(self):
+        jsondatas = []
+
+        for d in self.datas:
+            jsondatas.append(d.metadata)
+
+        return jsondatas
+
     def importDatas(self, filename, separator=';', preduce=True):
 
         count = 0
@@ -345,36 +362,8 @@ class Sensor(object):
         return content
 
     def convertSensorDatas2Html(self, **kwargs):
-        tail = 15
-        if 'tail' in kwargs:
-            tail = int(kwargs['tail'])
-
-        result = self.tail(tail, addmetainfo=True)
-
-        dates = []
-        datas = []
-        memdate = ''
-        memtime = ''
-        for r in result:
-            testdate = format_datetime(r.time, '%m-%d')
-            if testdate != memdate:
-                memdate = testdate
-                memtime = format_datetime(r.time, '%H:%M')
-                dates.append(format_datetime(r.time, '%m-%d %H:%M'))
-            else:
-                testtime = format_datetime(r.time, '%H:%M')
-                if testtime != memtime:
-                    memtime = testtime
-                    dates.append(format_datetime(r.time, '%H:%M'))
-                else:
-                    dates.append('')
-            datas.append(r.value)
-
-        mydatas = []
-        for r in result:
-            mydatas.append(r.metadata)
-
-        jsondatas = json.dumps(mydatas, separators=(',', ': '))
+        datas = self.datasToJSON()
+        jsondatas = json.dumps(datas, separators=(',', ': '))
 
         pydir = os.path.dirname(os.path.realpath(__file__))
         tplfile = '%s/server/templates/sensordatas.tpl' % pydir
@@ -392,11 +381,8 @@ class Sensor(object):
             {
                 'static': '/static',
                 'sensorid': self.sensorid,
-                'samples': len(result),
-                'lasts': result,
-                'dates': dates,
-                'datas': datas,
-                'mydatas': jsondatas,
+                'samples': len(datas),
+                'datas': jsondatas,
                 'generated_time': time.time(),
                 'state': {
                     'info': 'info',
@@ -411,14 +397,8 @@ class Sensor(object):
         return content
 
     def convertSensorDatas2Txt(self, **kwargs):
-        tail = 15
-        if 'tail' in kwargs:
-            tail = int(kwargs['tail'])
-
-        result = self.tail(tail)
-
         lines = []
-        for r in result:
+        for r in self.datas:
             lines.append([format_datetime(r.time), r.convert2text(self.configs)])
 
         header = ['Time', 'Value']
@@ -447,17 +427,19 @@ class SerialKillers(object):
 
         return matches
 
-    def getLastsValue(self):
-        lasts = {}
+
+    def getLastSensorsValue(self):
+        lasts = dict()
         for sensor in self.getSensorsIds():
             obj = Sensor(self._directory, sensor)
-            v = obj.tail(2, addmetainfo=True)
+            obj.tail(2, addmetainfo=True)
 
-            if v:
-                lsize = len(v)
+            lsize = len(obj.datas)
+            if lsize > 0:
                 idx = min(1, lsize - 1)
-                lasts[sensor] = {}
-                lasts[sensor] = v[idx]
+                lasts[sensor] = dict()
+                lasts[sensor]['configs'] = obj.configs
+                lasts[sensor]['last'] = obj.datas[idx]
 
         return lasts
 
@@ -475,7 +457,7 @@ class SerialKillers(object):
         return content
 
     def convertSensorsList2Txt(self):
-        lasts = self.getLastsValue()
+        lasts = self.getLastSensorsValue()
 
         lines = []
         for sensorid, value in lasts.iteritems():
@@ -493,7 +475,7 @@ class SerialKillers(object):
 
     def convertSensorsList2Html(self):
         # Get lasts values
-        lasts = self.getLastsValue()
+        lasts = self.getLastSensorsValue()
 
         pydir = os.path.dirname(os.path.realpath(__file__))
         tplfile = '%s/server/templates/sensorslist.tpl' % pydir
@@ -525,7 +507,7 @@ class SerialKillers(object):
         return content
 
     def autosetSensors(self):
-        lasts = self.getLastsValue()
+        lasts = self.getLastSensorsValue()
 
         for k, v in lasts.iteritems():
             if 'state' in v:

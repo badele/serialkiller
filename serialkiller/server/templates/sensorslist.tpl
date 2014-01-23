@@ -34,18 +34,18 @@
       {% for k, v in lasts.items() %}
         <tr>
           <td><a href="/{{ k }}.html">{{ k }}</a></td>
-          <td>{{ v.type }}</td>
-          {% if v['unavailable'] %}
-          <td><span class="label label-danger">{{ v['time']|datetime }}</span></td>
+          <td>{{ v['configs'].type }}</td>
+          {% if v['last'].unavailable %}
+          <td><span class="label label-danger">{{ v['last'].time|datetime }}</span></td>
           {% else %}
-          <td><span class="label label-info">{{ v['time']|datetime }}</span></td>
+          <td><span class="label label-info">{{ v['last'].time|datetime }}</span></td>
 {% endif %}
-          <td>{{ v['since']|sincetime }}</td>
-          <td>{{ v.metadata['configs']['title'] }}</td>
-          {% if state[v['state']] %}
-          <td><span class="label label-{{state[v['state']]}}">{{ v['text'] }}</span></td>
+          <td>{{ v['last'].since|sincetime }}</td>
+          <td>{{ v['configs']['title'] }}</td>
+          {% if state[v['last'].state] %}
+          <td><span class="label label-{{state[v['last'].state]}}">{{ v['last'].text }}</span></td>
           {% else %}
-          <td>{{ v['text'] }}</td>
+          <td>{{ v['last'].text }}</td>
 {% endif %}
         </tr>
       {% endfor %}
