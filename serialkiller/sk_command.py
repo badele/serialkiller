@@ -45,7 +45,6 @@ def getLastsValue(args):
 
 def sensorDatas(args):
 
-    obj = lib.Sensor(args.directory, args.sensorid)
     params = extractParams(args)
 
     if 'tail' not in params:
@@ -54,6 +53,8 @@ def sensorDatas(args):
     if 'format' not in params:
         params['format'] = 'txt'
 
+    obj = lib.Sensor(args.directory, args.sensorid)
+    obj.tail(nb=params['tail'])
     content = obj.convertSensorDatasTo(**params)
 
     if 'filename' in params:

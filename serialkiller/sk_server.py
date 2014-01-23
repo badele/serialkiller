@@ -71,7 +71,8 @@ def addValue(sensorid, type, values):
 def SensorDatas(sensorid):
     """List all last sensors"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid)
-    content = obj.convertSensorDatasTo(format='html', tail=500)
+    obj.tail(nb=1000)
+    content = obj.convertSensorDatasTo(format='html')
     return content
 
 
