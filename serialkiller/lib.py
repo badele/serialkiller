@@ -12,6 +12,7 @@ import os
 import re
 import time
 import json
+import fcntl
 import fnmatch
 from datetime import datetime
 
@@ -113,6 +114,7 @@ class Sensor(object):
     def __del__(self):
         # Close file before destroy this object
         if self._file:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
             self._file.close()
 
     def getFilename(self, ext='.data'):
@@ -129,8 +131,12 @@ class Sensor(object):
 
     def add2Log(self, obj):
         if self._file:
-            self._file.seek(0, 2)
-            self._file.write(obj.toBinary())
+            try:
+                fcntl.flock(self._file, fcntl.LOCK_EX)
+                self._file.seek(0, 2)
+                self._file.write(obj.toBinary())
+            finally:
+                fcntl.flock(self._file, fcntl.LOCK_UN)
 
     def addEvent(self, obj):
         self.add2Log(obj)
@@ -141,12 +147,16 @@ class Sensor(object):
             self.add2Log(obj)
         else:
             if obj.value == self.datas[0].value and obj.value == self.datas[1].value:
-                self.rewind(1)
-                self._file.write(obj.toBinary())
+                try:
+                    fcntl.flock(self._file, fcntl.LOCK_EX)
+                    self.rewind(1)
+                    self._file.write(obj.toBinary())
+                finally:
+                    fcntl.flock(self._file, fcntl.LOCK_UN)
             else:
                 self.add2Log(obj)
 
-    def completeConfig(self, configs=dict()):
+    def completeConfigs(self, configs=dict()):
         """Complete configs list with not seted configs"""
         for k, v in self._typeobj._defaultconfigs.iteritems():
             if not k in configs and '#%s' % k:
@@ -175,7 +185,7 @@ class Sensor(object):
             configs = json.loads(lines)
         else:
             configs = self.completeConfigs(configs)
-            self.saveProperties(configs)
+            self.saveConfigs(configs)
 
         return configs
 
@@ -216,6 +226,7 @@ class Sensor(object):
 
         # Get and verify skline size
         try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
             self._file.seek(-1, 2)
             size_end = ord(self._file.read(1))
             self._file.seek(-size_end, 2)
@@ -224,18 +235,23 @@ class Sensor(object):
                 raise Exception("No same size")
         except:
             return 0
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
 
         # Rewind
-        pos = self._file.tell()
-        for i in range(nb - 1):
-            if pos >= 0 and pos - size_start - 1 < 0:
-                break
-
-            self._file.seek(-size_start - 1, 1)
-            size_start = ord(self._file.read(1))
+        try:
             pos = self._file.tell()
+            for i in range(nb - 1):
+                if pos >= 0 and pos - size_start - 1 < 0:
+                    break
 
-        self._file.seek(-1, 1)
+                self._file.seek(-size_start - 1, 1)
+                size_start = ord(self._file.read(1))
+                pos = self._file.tell()
+
+            self._file.seek(-1, 1)
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
 
         # Return the last skline size
         return size_start
@@ -466,7 +482,7 @@ class SerialKillers(object):
                 state = 'X'
 
             # Add last value
-            line = [sensorid, state, format_datetime(value.time), value.metadata['configs']['title'], value.text ]
+            line = [sensorid, state, format_datetime(value.time), value.metadata['configs']['title'], value.text]
             lines.append(line)
 
         header = ['SensorId', 'S', 'Time', 'Title', 'Value']
