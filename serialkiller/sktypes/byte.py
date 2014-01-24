@@ -19,7 +19,7 @@ class byte(default):
         self._codebin = 0x2
 
         # Set default properties
-        tmpdict = dict(self._defaultproperties)
+        tmpdict = dict(self._defaultconfigs)
         tmpdict.update({
             'convert': {
                 'value': {
@@ -45,7 +45,7 @@ class byte(default):
                 'comment': True
             }}
         )
-        self._defaultproperties = tmpdict
+        self._defaultconfigs = tmpdict
 
     @default.value.setter
     def value(self, value):

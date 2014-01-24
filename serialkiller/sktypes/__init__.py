@@ -42,7 +42,7 @@ class default(object):
         self.checkMetadata()
 
         self._codebin = 0x0
-        self._defaultproperties = {
+        self._defaultconfigs = {
             'title': {
                 'value': 'Please set title for %(sensorid)s sensor'
             },

@@ -19,7 +19,7 @@ class ulong(default):
         self._codebin = 0x4
 
         # Set default properties
-        tmpdict = dict(self._defaultproperties)
+        tmpdict = dict(self._defaultconfigs)
         tmpdict.update({
             'autoset': {
                 'value': 1,
@@ -38,7 +38,7 @@ class ulong(default):
                 'comment': True
             }}
         )
-        self._defaultproperties = tmpdict
+        self._defaultconfigs = tmpdict
 
     @default.value.setter
     def value(self, value):
@@ -73,7 +73,7 @@ class ulong(default):
         if type(self.value) == str or type(self.value):
             self.metadata['value'] = int(self.value)
 
-        if self.value >= 0 and self.value <= 4294967295:
+        if self.value >= 0 and self.value <= 65535:
             return
 
         raise Exception("Value %s not authorized in %s type" % (self.value, self.type))

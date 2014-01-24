@@ -17,7 +17,7 @@ class boolean(byte):
         self._codebin = 0x3
 
         # Set default properties
-        tmpdict = dict(self._defaultproperties)
+        tmpdict = dict(self._defaultconfigs)
         tmpdict.update({
             'convert': {
                 'value': {
@@ -38,7 +38,7 @@ class boolean(byte):
                 'comment': True
             }}
         )
-        self._defaultproperties = tmpdict
+        self._defaultconfigs = tmpdict
 
     def checkMetadata(self):
         super(boolean, self).checkMetadata()
