@@ -97,7 +97,7 @@ def generateGraphs(args):
         sys.exit(1)
 
     if 'tail' not in params:
-        params['tail'] = 50
+        params['tail'] = 1000
 
     obj = lib.SerialKillers(args.directory)
     sensorsids = obj.getSensorsIds()
@@ -105,6 +105,7 @@ def generateGraphs(args):
     for sensorid in sensorsids:
         print "generate graphs for %s" % sensorid
         gen = lib.Sensor(args.directory, sensorid)
+        gen.tail(nb=params['tail'])
         content = gen.convertSensorDatas2Html(**params)
 
         filename = "%s/%s.html" % (params['directory'], sensorid)
