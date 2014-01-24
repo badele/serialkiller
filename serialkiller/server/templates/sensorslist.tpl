@@ -15,6 +15,14 @@
     <![endif]-->
   </head>
   <body>
+    <style>
+      .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td {
+    border-top: 1px solid #DDDDDD;
+    line-height: 0;
+    padding: 8px;
+    vertical-align: top;
+      }
+    </style>
     <div class="page-header">
       <h1>Sensors states<small>&nbsp;{{ generated_time|datetime }}</small></h1>
     </div>
