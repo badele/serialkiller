@@ -6,7 +6,7 @@
     <meta http-equiv="Refresh" CONTENT="300; URL=http://domotique.adele.im/">
     <!-- Bootstrap -->
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
-    <script type="text/javascript" src="/static/css/d3.v3.min.js"></script>
+    <script type="text/javascript" src="/static/js/d3.v3.min.js"></script>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
