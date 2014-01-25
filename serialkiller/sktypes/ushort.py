@@ -25,6 +25,10 @@ class ushort(default):
                 'value': 1,
                 'comment': True
             },
+            'roundvalue': {
+                'value': 10,
+                'comment': True
+            },
             'limit_crit': {
                 'value': '> 90',
                 'comment': True

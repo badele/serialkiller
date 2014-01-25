@@ -28,6 +28,10 @@ class byte(default):
                 },
                 'comment': True
             },
+            'roundvalue': {
+                'value': 10,
+                'comment': True
+            },
             'autoset': {
                 'value': 1,
                 'comment': True
