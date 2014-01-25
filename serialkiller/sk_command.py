@@ -12,9 +12,13 @@ import os
 import sys
 import fnmatch
 import argparse
+from datetime import datetime
+
+from tabulate import tabulate
 
 from serialkiller import lib
 from serialkiller import sktypes
+
 
 
 def addValue(args):
@@ -68,6 +72,40 @@ def sensorDatas(args):
         print content
 
 
+def sensorInfos(args):
+    checkRequireValueAndType(args)
+    params = extractParams(args)
+
+    obj = lib.Sensor(args.directory, args.sensorid, args.type)
+    infos = obj.SensorInfos(**params)
+
+    if not infos:
+        print "Not enought datas for %s" % args.sensorid
+        sys.exit(1)
+
+    showresult = [
+        ['Sensorid', args.sensorid],
+        ['NB lines', str(infos['nblines'])],
+        ['Min date', format_datetime(infos['mindate'])],
+        ['Max date', format_datetime(infos['maxdate'])],
+        ['Min value', '%s (%s)' % (str(infos['minvalue']), format_datetime(infos['minvaluedate']))],
+        ['Max value', '%s (%s)' % (str(infos['maxvalue']), format_datetime(infos['maxvaluedate']))],
+#        ['Avg size', str(infos['avgsize'])],
+        ['Avg value', str(infos['avgvalue'])],
+        ['Avg delta (round ratio)', str(infos['avgdelta'])],
+        ['Total size', '%s Mo' % str(infos['avgsize'] * infos['nblines'] / 1024 / 1024.0)],
+    ]
+
+    header = ['Title', 'Value']
+    print tabulate(showresult, headers=header)
+
+
+def sensorReduce(args):
+    checkRequireValueAndType(args)
+    obj = lib.Sensor(args.directory, args.sensorid, args.type)
+    obj.reduce()
+
+
 def setProperty(args):
     checkRequireValueAndType(args)
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
@@ -83,7 +121,6 @@ def importSensorIds(args):
     if 'filename' not in params:
         print("Please set filename value")
         sys.exit(1)
-        return
 
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
     imported = obj.importDatas(params['filename'])
@@ -167,6 +204,9 @@ def checkRequireValueAndType(args):
         print("Please define type value with -t")
         sys.exit(1)
 
+def format_datetime(value, fmt='%Y-%m-%d %H:%M:%S'):
+    return format(datetime.fromtimestamp(value), fmt)
+
 
 def parse_arguments(cmdline=""):
     """Parse the arguments"""
@@ -188,9 +228,11 @@ def parse_arguments(cmdline=""):
             'generategraphs',
             'import',
             'last',
-            'sensorslist',
             'sensordatas',
+            'sensorinfos',
+            'sensorslist',
             'setproperty',
+            'reduce',
         ],
         help='Action'
     )
@@ -291,12 +333,17 @@ def main():
         if 'sensordatas' in args.action:
             sensorDatas(args)
 
+        if 'sensorinfos' in args.action:
+            sensorInfos(args)
+
         if 'sensorslist' in args.action:
             sensorsList(args)
 
         if 'generategraphs' in args.action:
             generateGraphs(args)
 
+        if 'reduce' in args.action:
+            sensorReduce(args)
 
 
 if __name__ == '__main__':

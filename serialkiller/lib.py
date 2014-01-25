@@ -14,6 +14,7 @@ import time
 import json
 import fcntl
 import fnmatch
+import shutil
 from datetime import datetime
 
 # Others
@@ -64,8 +65,8 @@ class Sensor(object):
             self._configs = self.readConfigs()
             calctype = self.configs['type']
 
-        # Not found type in sensor configuration
         if not calctype:
+            # Not found type in sensor configuration
             self.configs['type'] = type
             calctype = type
 
@@ -76,7 +77,7 @@ class Sensor(object):
         except ImportError:
             raise Exception("The %s type not exist" % type)
 
-        self._configs = self.readConfigs()
+        self._configs = self.readConfigs(update=True)
 
     @property
     def sensorid(self):
@@ -144,9 +145,18 @@ class Sensor(object):
     def addValue(self, obj):
         self.tail(2)
         if len(self.datas) < 2:
+            # No enough datas for compare
             self.add2Log(obj)
         else:
-            if obj.value == self.datas[0].value and obj.value == self.datas[1].value:
+            if 'roundvalue' in self.configs:
+                roundvalue = self.configs['roundvalue']
+                delta0 = abs(obj.value - self.datas[0].value)
+                delta1 = abs(obj.value - self.datas[1].value)
+                samevalue = delta0 <= roundvalue and delta1 <= roundvalue
+            else:
+                samevalue = obj.value == self.datas[0].value and obj.value == self.datas[1].value
+
+            if samevalue:
                 try:
                     fcntl.flock(self._file, fcntl.LOCK_EX)
                     self.rewind(1)
@@ -156,36 +166,44 @@ class Sensor(object):
             else:
                 self.add2Log(obj)
 
-    def completeConfigs(self, configs=dict()):
+    def completeConfigsForType(self, configs=dict()):
         """Complete configs list with not seted configs"""
-        for k, v in self._typeobj._defaultconfigs.iteritems():
-            if not k in configs and '#%s' % k:
+        for configname, value in self._typeobj._defaultconfigs.iteritems():
+            if not configname in configs and '#%s' % configname:
+                # t
                 comment = ''
-                if 'comment' in v and v['comment']:
+                if 'comment' in value and value['comment']:
                     comment = '#'
 
-                if isinstance(v['value'], str):
-                    configs['%s%s' % (comment, k)] = str(v['value']) % {
+                if isinstance(value['value'], str):
+                    configs['%s%s' % (comment, configname)] = str(value['value']) % {
                         'sensorid': self._sensorid,
                         'type': self.type
                     }
                 else:
-                    configs['%s%s' % (comment, k)] = v['value']
+                    configs['%s%s' % (comment, configname)] = value['value']
 
         return configs
 
-    def readConfigs(self):
+    def readConfigs(self, update=False):
         # Try open file
         lines = []
         filename = self.getFilename('.conf')
 
         configs = {}
-        if os.path.isfile(filename):
+
+        exists = os.path.isfile(filename)
+        if exists:
             lines = open(filename).read()
             configs = json.loads(lines)
-        else:
-            configs = self.completeConfigs(configs)
-            self.saveConfigs(configs)
+
+        if exists and update or not exists:
+            oldconfig_size = len(configs)
+            changeconfigs = self.completeConfigsForType(configs)
+            changeconfigs_size = len(changeconfigs)
+            changed = (oldconfig_size - changeconfigs_size) != 0
+            if changed:
+                self.saveConfigs(configs)
 
         return configs
 
@@ -240,6 +258,7 @@ class Sensor(object):
 
         # Rewind
         try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
             pos = self._file.tell()
             for i in range(nb - 1):
                 if pos >= 0 and pos - size_start - 1 < 0:
@@ -256,6 +275,57 @@ class Sensor(object):
         # Return the last skline size
         return size_start
 
+    def forward(self, nb):
+
+        # No file
+        if not self._file:
+            return 0
+
+        # Get and verify skline size
+        try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
+            size_start = ord(self._file.read(1))
+            self._file.seek(size_start)
+            size_end = ord(self._file.read(1))
+            if size_start != size_end:
+                raise Exception("No same size")
+
+            self._file.seek(0)
+
+        except:
+            return 0
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
+
+        # Forward
+        try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
+            self._file.seek(0, 2)
+            endfile = self._file.tell()
+
+            self._file.seek(0)
+            if nb == 0:
+                return size_end
+
+            for i in range(nb):
+                self._file.seek(size_end - 1, 1)
+                pos = self._file.tell()
+
+                if pos > endfile:
+                    return 0
+
+                size_end = ord(self._file.read(1))
+
+            self._file.seek(-1, 1)
+            size_start = ord(self._file.read(1))
+            self._file.seek(-1, 1)
+
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
+
+        # Return the last skline size
+        return size_start
+
     def readObj(self, size):
         bline = self._file.read(size)
         if not bline:
@@ -266,6 +336,22 @@ class Sensor(object):
 
         return obj
 
+    def loadToDatas(self):
+        try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
+            sizetoread = ord(self._file.read(1))
+            self._file.seek(-1, 1)
+
+            obj = self.readObj(sizetoread)
+            while obj:
+                self._datas.append(obj)
+                obj = self.readObj(obj.size)
+        except TypeError:
+            pass
+
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
+
     def tail(self, nb=1, addmetainfo=False):
         self._datas = []
 
@@ -273,15 +359,11 @@ class Sensor(object):
         if not self._file:
             return 0
 
-        nb = int(nb)
+        nb = (nb)
 
         # Read the nb skline
-        sizetoread = self.rewind(nb)
-        if sizetoread:
-            obj = self.readObj(sizetoread)
-            while obj:
-                self._datas.append(obj)
-                obj = self.readObj(obj.size)
+        self.rewind(nb)
+        self.loadToDatas()
 
         # Complete extra info
         if addmetainfo:
@@ -344,6 +426,110 @@ class Sensor(object):
             jsondatas.append(d.metadata)
 
         return jsondatas
+
+    def reduce(self):
+        self._datas = []
+
+        try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
+
+            # Copy file
+            print "Copy"
+            shutil.copy2(self._filename,self.getFilename('.copy'))
+
+            # Load current content
+            print "LOAD"
+            self._file.seek(0)
+            self.loadToDatas()
+            orig = self._datas
+            print "LEN: %s" % len(orig)
+
+            # Empty the file
+            print "Empty"
+            self._file.seek(0)
+            self._file.truncate()
+
+            print "REDUCE"
+            for d in orig:
+                self.addValue(d)
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
+
+    def SensorInfos(self, **kwargs):
+        self._datas = []
+
+        tail = None
+        if 'tail' in kwargs:
+            tail = int(kwargs['tail'])
+
+        try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
+
+            if tail:
+                self.tail(nb=tail, addmetainfo=True)
+            else:
+                self._file.seek(0)
+
+            self.loadToDatas()
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
+
+        # Avg size
+        infos = {}
+        sizes = []
+        value = []
+        delta = []
+        size = len(self.datas)
+
+        if size < 2:
+            return None
+
+        minvalue = self.datas[0].value
+        maxvalue = self.datas[0].value
+        mindate = self.datas[0].time
+        maxdate = self.datas[size - 1].time
+
+        # Calc avg
+        for idx in range(1, len(self.datas)):
+            obj0 = self.datas[idx - 1]
+            obj1 = self.datas[idx]
+            sizes.append(obj0.size)
+            value.append(obj0.value)
+            delta.append(abs(obj0.value - obj1.value))
+
+            # Search minvalue
+            if obj0.value < obj1.value:
+                mini = obj0
+            else:
+                mini = obj1
+
+            if mini.value < minvalue:
+                minvalue = mini.value
+                minvaluedate = mini.time
+
+            # Search maxvalue
+            if obj0.value > obj1.value:
+                maxi = obj0
+            else:
+                maxi = obj1
+
+            if maxi.value > maxvalue:
+                maxvalue = maxi.value
+                maxvaluedate = maxi.time
+
+        infos['mindate'] = mindate
+        infos['maxdate'] = maxdate
+        infos['minvalue'] = minvalue
+        infos['maxvalue'] = maxvalue
+        infos['minvaluedate'] = minvaluedate
+        infos['maxvaluedate'] = maxvaluedate
+        infos['avgsize'] = reduce(lambda x, y: x + y, sizes) / len(sizes)
+        infos['avgvalue'] = reduce(lambda x, y: x + y, value) / len(value)
+        infos['avgdelta'] = reduce(lambda x, y: x + y, delta) / len(delta)
+        infos['nblines'] = size
+
+        return infos
+
 
     def importDatas(self, filename, separator=';', preduce=True):
 
