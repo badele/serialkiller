@@ -455,6 +455,7 @@ class Sensor(object):
             fcntl.flock(self._file, fcntl.LOCK_UN)
 
     def SensorInfos(self, **kwargs):
+        """Get sensor informations"""
         self._datas = []
 
         tail = None
@@ -465,8 +466,10 @@ class Sensor(object):
             fcntl.flock(self._file, fcntl.LOCK_EX)
 
             if tail:
+                # Rewind nb lines
                 self.rewind(nb=tail)
             else:
+                # Full file
                 self._file.seek(0)
 
             infos = {}
@@ -474,7 +477,6 @@ class Sensor(object):
             sizesum = 0
             valuesum = 0
             deltasum = 0
-
             minvalue = 4294967295
             maxvalue = -4294967295
             minvaluedate = 4294967295
@@ -482,12 +484,14 @@ class Sensor(object):
             mindate = 4294967295
             maxdate = 0
 
+            # Get the size of first block
             try:
                 sizetoread = ord(self._file.read(1))
                 self._file.seek(-1, 1)
             except:
                 sizetoread = 0
 
+            # Compute statistic
             oldvalue = None
             if sizetoread > 0:
                 obj = self.readObj(sizetoread)
@@ -534,7 +538,6 @@ class Sensor(object):
         infos['nblines'] = size
 
         return infos
-
 
     def importDatas(self, filename, separator=';', preduce=True):
 
