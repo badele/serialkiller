@@ -272,7 +272,6 @@ class Sensor(object):
         finally:
             fcntl.flock(self._file, fcntl.LOCK_UN)
 
-        # Return the last skline size
         return size_start
 
     def forward(self, nb):
@@ -466,56 +465,62 @@ class Sensor(object):
             fcntl.flock(self._file, fcntl.LOCK_EX)
 
             if tail:
-                self.tail(nb=tail, addmetainfo=True)
+                self.rewind(nb=tail)
             else:
                 self._file.seek(0)
 
-            self.loadToDatas()
+            infos = {}
+            size = 0
+            sizesum = 0
+            valuesum = 0
+            deltasum = 0
+
+            minvalue = 4294967295
+            maxvalue = -4294967295
+            minvaluedate = 4294967295
+            maxvaluedate = 0
+            mindate = 4294967295
+            maxdate = 0
+
+            try:
+                sizetoread = ord(self._file.read(1))
+                self._file.seek(-1, 1)
+            except:
+                sizetoread = 0
+
+            oldvalue = None
+            if sizetoread > 0:
+                obj = self.readObj(sizetoread)
+                while obj:
+                    size += 1
+                    sizesum += obj.size
+                    valuesum += obj.value
+
+                    if oldvalue:
+                        deltasum += abs(oldvalue - obj.value)
+
+                    oldvalue = obj.value
+
+                    # Check value
+                    if obj.value < minvalue:
+                        minvalue = obj.value
+                        minvaluedate = obj.time
+
+                    if obj.value > maxvalue:
+                        maxvalue = obj.value
+                        maxvaluedate = obj.time
+
+                    # Check time
+                    if obj.time < mindate:
+                        mindate = obj.time
+
+                    if obj.time > maxdate:
+                        maxdate = obj.time
+
+                    obj = self.readObj(obj.size)
+
         finally:
             fcntl.flock(self._file, fcntl.LOCK_UN)
-
-        # Avg size
-        infos = {}
-        sizes = []
-        value = []
-        delta = []
-        size = len(self.datas)
-
-        if size < 2:
-            return None
-
-        minvalue = self.datas[0].value
-        maxvalue = self.datas[0].value
-        mindate = self.datas[0].time
-        maxdate = self.datas[size - 1].time
-
-        # Calc avg
-        for idx in range(1, len(self.datas)):
-            obj0 = self.datas[idx - 1]
-            obj1 = self.datas[idx]
-            sizes.append(obj0.size)
-            value.append(obj0.value)
-            delta.append(abs(obj0.value - obj1.value))
-
-            # Search minvalue
-            if obj0.value < obj1.value:
-                mini = obj0
-            else:
-                mini = obj1
-
-            if mini.value < minvalue:
-                minvalue = mini.value
-                minvaluedate = mini.time
-
-            # Search maxvalue
-            if obj0.value > obj1.value:
-                maxi = obj0
-            else:
-                maxi = obj1
-
-            if maxi.value > maxvalue:
-                maxvalue = maxi.value
-                maxvaluedate = maxi.time
 
         infos['mindate'] = mindate
         infos['maxdate'] = maxdate
@@ -523,9 +528,9 @@ class Sensor(object):
         infos['maxvalue'] = maxvalue
         infos['minvaluedate'] = minvaluedate
         infos['maxvaluedate'] = maxvaluedate
-        infos['avgsize'] = reduce(lambda x, y: x + y, sizes) / len(sizes)
-        infos['avgvalue'] = reduce(lambda x, y: x + y, value) / len(value)
-        infos['avgdelta'] = reduce(lambda x, y: x + y, delta) / len(delta)
+        infos['avgvalue'] = valuesum / size
+        infos['avgdelta'] = deltasum / size
+        infos['avgsize'] = sizesum / size
         infos['nblines'] = size
 
         return infos
