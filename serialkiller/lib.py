@@ -119,7 +119,7 @@ class Sensor(object):
             self._file.close()
 
     def getFilename(self, ext='.data'):
-        # Return filename
+        """Get sensor fullname"""
         filename = '%s/%s' % (
             self._directory,
             self._sensorid.replace(':', '/')
@@ -130,7 +130,8 @@ class Sensor(object):
 
         return filename
 
-    def add2Log(self, obj):
+    def addAtEnd(self, obj):
+        """Add a binary data at the end of file"""
         if self._file:
             try:
                 fcntl.flock(self._file, fcntl.LOCK_EX)
@@ -140,13 +141,13 @@ class Sensor(object):
                 fcntl.flock(self._file, fcntl.LOCK_UN)
 
     def addEvent(self, obj):
-        self.add2Log(obj)
+        self.addAtEnd(obj)
 
     def addValue(self, obj):
         self.tail(2)
         if len(self.datas) < 2:
             # No enough datas for compare
-            self.add2Log(obj)
+            self.addAtEnd(obj)
         else:
             if 'roundvalue' in self.configs:
                 roundvalue = self.configs['roundvalue']
@@ -164,7 +165,7 @@ class Sensor(object):
                 finally:
                     fcntl.flock(self._file, fcntl.LOCK_UN)
             else:
-                self.add2Log(obj)
+                self.addAtEnd(obj)
 
     def completeConfigsForType(self, configs=dict()):
         """Complete configs list with not seted configs"""
