@@ -77,7 +77,7 @@ class ulong(default):
         if type(self.value) == str or type(self.value):
             self.metadata['value'] = int(self.value)
 
-        if self.value >= 0 and self.value <= 65535:
+        if self.value >= 0 and self.value <= 4294967295:
             return
 
         raise Exception("Value %s not authorized in %s type" % (self.value, self.type))
