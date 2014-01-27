@@ -20,9 +20,9 @@ from serialkiller import lib
 from serialkiller import sktypes
 
 
-
 def addValue(args):
-    checkRequireValueAndType(args)
+    requireSensorID(args)
+    requireSensorType(args)
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
@@ -31,7 +31,8 @@ def addValue(args):
 
 
 def addEvent(args):
-    checkRequireValueAndType(args)
+    requireSensorID(args)
+    requireSensorType(args)
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
@@ -73,7 +74,7 @@ def sensorDatas(args):
 
 
 def sensorInfos(args):
-    checkRequireValueAndType(args)
+    requireSensorID(args)
     params = extractParams(args)
 
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
@@ -102,7 +103,7 @@ def sensorInfos(args):
 
 
 def sensorReduce(args):
-    checkRequireValueAndType(args)
+    requireSensorId(args)
     params = extractParams(args)
 
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
@@ -110,7 +111,8 @@ def sensorReduce(args):
 
 
 def setProperty(args):
-    checkRequireValueAndType(args)
+    requireSensorID(args)
+    requireSensorType(args)
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
@@ -118,8 +120,8 @@ def setProperty(args):
 
 
 def importSensorIds(args):
-    checkRequireValueAndType(args)
-
+    requireSensorID(args)
+    requireSensorType(args)
     params = extractParams(args)
     if 'filename' not in params:
         print("Please set filename value")
@@ -197,15 +199,17 @@ def extractParams(args):
     return params
 
 
-def checkRequireValueAndType(args):
+def requireSensorID(args):
     if not args.sensorid:
         print("Please define sensorid")
         sys.exit(1)
         return
 
+def requireSensorType(args):
     if not args.type:
         print("Please define type value with -t")
         sys.exit(1)
+
 
 def format_datetime(value, fmt='%Y-%m-%d %H:%M:%S'):
     return format(datetime.fromtimestamp(value), fmt)
