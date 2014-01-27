@@ -102,8 +102,10 @@ def sensorInfos(args):
 
 def sensorReduce(args):
     checkRequireValueAndType(args)
+    params = extractParams(args)
+
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
-    obj.reduce()
+    obj.reduce(**params)
 
 
 def setProperty(args):

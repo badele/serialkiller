@@ -160,7 +160,7 @@ class Sensor(object):
             if samevalue:
                 try:
                     fcntl.flock(self._file, fcntl.LOCK_EX)
-                    self.rewind(1)
+                    self.rewind(self._file, 1)
                     self._file.write(obj.toBinary())
                 finally:
                     fcntl.flock(self._file, fcntl.LOCK_UN)
@@ -237,97 +237,96 @@ class Sensor(object):
 
         self.saveConfigs(self._configs)
 
-    def rewind(self, nb):
+    def rewind(self, fileobj, nb):
 
         # No file
-        if not self._file:
+        if not fileobj:
             return 0
 
-        # Get and verify skline size
+        # Get and verify block size
         try:
-            fcntl.flock(self._file, fcntl.LOCK_EX)
-            self._file.seek(-1, 2)
-            size_end = ord(self._file.read(1))
-            self._file.seek(-size_end, 2)
-            size_start = ord(self._file.read(1))
+            fcntl.flock(fileobj, fcntl.LOCK_EX)
+            fileobj.seek(-1, 2)
+            size_end = ord(fileobj.read(1))
+            fileobj.seek(-size_end, 2)
+            size_start = ord(fileobj.read(1))
             if size_start != size_end:
                 raise Exception("No same size")
         except:
             return 0
         finally:
-            fcntl.flock(self._file, fcntl.LOCK_UN)
+            fcntl.flock(fileobj, fcntl.LOCK_UN)
 
         # Rewind
         try:
-            fcntl.flock(self._file, fcntl.LOCK_EX)
-            pos = self._file.tell()
+            fcntl.flock(fileobj, fcntl.LOCK_EX)
+            pos = fileobj.tell()
             for i in range(nb - 1):
                 if pos >= 0 and pos - size_start - 1 < 0:
                     break
 
-                self._file.seek(-size_start - 1, 1)
-                size_start = ord(self._file.read(1))
-                pos = self._file.tell()
+                fileobj.seek(-size_start - 1, 1)
+                size_start = ord(fileobj.read(1))
+                pos = fileobj.tell()
 
-            self._file.seek(-1, 1)
+            fileobj.seek(-1, 1)
         finally:
-            fcntl.flock(self._file, fcntl.LOCK_UN)
+            fcntl.flock(fileobj, fcntl.LOCK_UN)
 
         return size_start
 
-    def forward(self, nb):
+    def forward(self, fileobj, nb):
 
         # No file
-        if not self._file:
+        if not fileobj:
             return 0
 
         # Get and verify skline size
         try:
-            fcntl.flock(self._file, fcntl.LOCK_EX)
-            size_start = ord(self._file.read(1))
-            self._file.seek(size_start)
-            size_end = ord(self._file.read(1))
+            fcntl.flock(fileobj, fcntl.LOCK_EX)
+            size_start = ord(fileobj.read(1))
+            fileobj.seek(size_start)
+            size_end = ord(fileobj.read(1))
             if size_start != size_end:
                 raise Exception("No same size")
 
-            self._file.seek(0)
+            fileobj.seek(0)
 
         except:
             return 0
         finally:
-            fcntl.flock(self._file, fcntl.LOCK_UN)
+            fcntl.flock(fileobj, fcntl.LOCK_UN)
 
         # Forward
         try:
-            fcntl.flock(self._file, fcntl.LOCK_EX)
-            self._file.seek(0, 2)
-            endfile = self._file.tell()
+            fcntl.flock(fileobj, fcntl.LOCK_EX)
+            fileobj.seek(0, 2)
+            endfile = fileobj.tell()
 
-            self._file.seek(0)
+            fileobj.seek(0)
             if nb == 0:
                 return size_end
 
             for i in range(nb):
-                self._file.seek(size_end - 1, 1)
-                pos = self._file.tell()
+                fileobj.seek(size_end - 1, 1)
+                pos = fileobj.tell()
 
                 if pos > endfile:
                     return 0
 
-                size_end = ord(self._file.read(1))
+                size_end = ord(fileobj.read(1))
 
-            self._file.seek(-1, 1)
-            size_start = ord(self._file.read(1))
-            self._file.seek(-1, 1)
+            fileobj.seek(-1, 1)
+            size_start = ord(fileobj.read(1))
+            fileobj.seek(-1, 1)
 
         finally:
-            fcntl.flock(self._file, fcntl.LOCK_UN)
+            fcntl.flock(fileobj, fcntl.LOCK_UN)
 
-        # Return the last skline size
         return size_start
 
-    def readObj(self, size):
-        bline = self._file.read(size)
+    def readObj(self, fileobj, size):
+        bline = fileobj.read(size)
         if not bline:
             return None
 
@@ -336,34 +335,40 @@ class Sensor(object):
 
         return obj
 
-    def loadToDatas(self):
+    def readBlockSize(self, fileobj):
         try:
-            fcntl.flock(self._file, fcntl.LOCK_EX)
-            sizetoread = ord(self._file.read(1))
-            self._file.seek(-1, 1)
+            fcntl.flock(fileobj, fcntl.LOCK_EX)
+            sizetoread = ord(fileobj.read(1))
+            fileobj.seek(-1, 1)
+        except:
+            sizetoread = 0
 
-            obj = self.readObj(sizetoread)
+        return sizetoread
+
+    def loadToDatas(self, fileobj):
+        try:
+            sizetoread = self.readBlockSize(fileobj)
+            obj = self.readObj(fileobj, sizetoread)
             while obj:
                 self._datas.append(obj)
-                obj = self.readObj(obj.size)
+                obj = self.readObj(fileobj, obj.size)
         except TypeError:
             pass
 
         finally:
-            fcntl.flock(self._file, fcntl.LOCK_UN)
+            fcntl.flock(fileobj, fcntl.LOCK_UN)
 
     def tail(self, nb=1, addmetainfo=False):
         self._datas = []
 
-        # No file
+        # File not opened
         if not self._file:
             return 0
 
-        nb = (nb)
-
         # Read the nb skline
-        self.rewind(nb)
-        self.loadToDatas()
+        nb = int(nb)
+        self.rewind(self._file, nb)
+        self.loadToDatas(self._file)
 
         # Complete extra info
         if addmetainfo:
@@ -427,33 +432,45 @@ class Sensor(object):
 
         return jsondatas
 
-    def reduce(self):
-        self._datas = []
+    def reduce(self, **kwargs):
+
+        tail = None
+        if 'tail' in kwargs:
+            tail = int(kwargs['tail'])
 
         try:
             fcntl.flock(self._file, fcntl.LOCK_EX)
 
+
             # Copy file
-            print "Copy"
             shutil.copy2(self._filename,self.getFilename('.copy'))
 
-            # Load current content
-            print "LOAD"
-            self._file.seek(0)
-            self.loadToDatas()
-            orig = self._datas
-            print "LEN: %s" % len(orig)
+            tmpfile = open(self.getFilename('.copy'))
+            if tmpfile:
+                fcntl.flock(tmpfile, fcntl.LOCK_EX)
 
-            # Empty the file
-            print "Empty"
-            self._file.seek(0)
-            self._file.truncate()
+                # Empty the file
+                self._file.seek(0)
+                self._file.truncate()
 
-            print "REDUCE"
-            for d in orig:
-                self.addValue(d)
+                if tail:
+                    # Rewind nb lines
+                    self.rewind(tmpfile, nb=tail)
+                else:
+                    # Full file
+                    tmpfile.seek(0)
+
+                sizetoread = self.readBlockSize(tmpfile)
+                obj = self.readObj(tmpfile, sizetoread)
+                while obj:
+                    self.addValue(obj)
+                    obj = self.readObj(tmpfile, obj.size)
+
         finally:
             fcntl.flock(self._file, fcntl.LOCK_UN)
+            if tmpfile:
+                fcntl.flock(tmpfile, fcntl.LOCK_UN)
+                os.remove(self.getFilename('.copy'))
 
     def SensorInfos(self, **kwargs):
         """Get sensor informations"""
@@ -468,7 +485,7 @@ class Sensor(object):
 
             if tail:
                 # Rewind nb lines
-                self.rewind(nb=tail)
+                self.rewind(self._file, nb=tail)
             else:
                 # Full file
                 self._file.seek(0)
@@ -486,16 +503,14 @@ class Sensor(object):
             maxdate = 0
 
             # Get the size of first block
-            try:
-                sizetoread = ord(self._file.read(1))
-                self._file.seek(-1, 1)
-            except:
-                sizetoread = 0
+            sizetoread = self.readBlockSize(self._file)
+                
+
 
             # Compute statistic
             oldvalue = None
             if sizetoread > 0:
-                obj = self.readObj(sizetoread)
+                obj = self.readObj(self._file, sizetoread)
                 while obj:
                     size += 1
                     sizesum += obj.size
@@ -522,7 +537,7 @@ class Sensor(object):
                     if obj.time > maxdate:
                         maxdate = obj.time
 
-                    obj = self.readObj(obj.size)
+                    obj = self.readObj(self._file, obj.size)
 
         finally:
             fcntl.flock(self._file, fcntl.LOCK_UN)
