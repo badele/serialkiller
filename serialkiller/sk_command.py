@@ -85,6 +85,7 @@ def sensorInfos(args):
 
     showresult = [
         ['Sensorid', args.sensorid],
+        ['Sensor Type', obj.configs['type']],
         ['NB lines', str(infos['nblines'])],
         ['Min date', format_datetime(infos['mindate'])],
         ['Max date', format_datetime(infos['maxdate'])],
