@@ -150,7 +150,7 @@ class Sensor(object):
             self.addAtEnd(obj)
         else:
             if 'roundvalue' in self.configs:
-                roundvalue = self.configs['roundvalue']
+                roundvalue = float(self.configs['roundvalue'])
                 delta0 = abs(obj.value - self.datas[0].value)
                 delta1 = abs(obj.value - self.datas[1].value)
                 samevalue = delta0 <= roundvalue and delta1 <= roundvalue
