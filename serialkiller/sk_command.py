@@ -103,10 +103,14 @@ def sensorInfos(args):
 
 
 def sensorReduce(args):
-    requireSensorId(args)
+    requireSensorID(args)
     params = extractParams(args)
 
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
+
+    if 'roundvalue' not in obj.configs:
+        raise Exception('Please set roundvalue in sensor configuration')
+
     obj.reduce(**params)
 
 
