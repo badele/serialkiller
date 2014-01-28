@@ -120,7 +120,7 @@ def setProperty(args):
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
 
     params = extractParams(args)
-    obj.setProperties(**params)
+    obj.setConfigs(**params)
 
 
 def importSensorIds(args):
