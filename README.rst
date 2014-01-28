@@ -10,7 +10,8 @@
 .. disableimage:: https://pypip.in/d/serialkiller/badge.png
    :target: https://crate.io/packages/serialkiller/
 
-
+.. figure:: screenshot.png
+   :alt: Gitcheck simple
 
 About
 =====
