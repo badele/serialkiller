@@ -10,6 +10,7 @@ __version__ = '0.0.1'
 # System
 import os
 import sys
+import imp
 import fnmatch
 import argparse
 from datetime import datetime
@@ -19,6 +20,10 @@ from tabulate import tabulate
 from serialkiller import lib
 from serialkiller import sktypes
 
+
+configs = {
+    'STORAGE': '/tmp/sensors',
+}
 
 def addValue(args):
     requireSensorID(args)
@@ -252,7 +257,7 @@ def parse_arguments(cmdline=""):
         '-d', '--dir',
         action='store',
         dest='directory',
-        default=os.getenv('SK_STORAGE', '/tmp/sensors'),
+        default=configs['STORAGE'],
         help='Directory location'
     )
 
@@ -315,6 +320,14 @@ def parse_arguments(cmdline=""):
     return a
 
 
+def loadConfig():
+    filename = os.environ.get('SERIALKILLER_SETTINGS')
+
+    with open(filename) as myfile:
+        for line in myfile:
+            name, var = line.partition("=")[::2]
+            configs[name.strip()] = eval(var)
+
 def main():
     # Parse arguments
     args = parse_arguments(sys.argv[1:])  # pragma: no cover
@@ -358,4 +371,5 @@ def main():
 
 
 if __name__ == '__main__':
+    loadConfig()
     main()  # pragma: no cover
