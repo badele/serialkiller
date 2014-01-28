@@ -20,7 +20,11 @@ About
 ``serialkiller`` can be used in three different ways:
 - In command line
 - In http API REST mode
-- With library
+- From library
+
+Configuration
+
+
 
 Installing
 ==========
@@ -37,16 +41,16 @@ To install the latest development version from `GitHub <https://github.com/badel
 
     $ pip install git+git://github.com/badele/serialkiller.git
 
-Configuration
-=============
+Configuration & Examples
+========================
 
-Copy sk_server.cfg from serialkiller package to /etc/sk_server.cfg and edit your ``.bashrc``, add this line 
+Copy sk_config.cfg from serialkiller package to /etc/sk_config.cfg and edit your ``.bashrc``, add this line 
 
 .. code-block:: console
 
-   SERIALKILLER_SETTINGS=/etc/sk_server.cfg
+   SERIALKILLER_SETTINGS=/etc/sk_config.cfg
 
-The default `sk_server.cfg`
+The default `sk_config.cfg`
 
 .. code-block:: console
 
@@ -61,9 +65,112 @@ Now you can run the serialkiller standalone server with `sk_standalone`
 
    sk_standalone &
 
-You can now use the `serialkiller-plugins <https://github.com/badele/serialkiller-plugins>`_ for push the sensors results 
 
-You can also point your web navigator to http://youipserver, that return the list of all functions in JSON format, sample result: 
+Example, if now you would like add a minimal sensor (ex: online computer) with auto-configuration type sensor
+
+.. code-block:: console
+
+   # From command line
+   sk_command -a addvalue -s domsrv:computer:online -t byte -v value=255
+
+   # From REST API
+   wget serverip/api/1.0/addValue/domsrv:computer:online/byte/value=255
+
+   # From library
+   from serialkiller import lib
+   obj = lib.Sensor(args.directory, args.sensorid, args.type)
+   data = sktypes.newObj('byte', value=255)
+   obj.addValue(data)
+
+Show sensor information
+
+.. code-block:: console
+
+   $ sk_command -a sensorinfos -s domsrv:teleinfo:papp -t ushort
+
+   Title                    Value
+   -----------------------  --------------------------
+   Sensorid                 domsrv:teleinfo:papp
+   Sensor Type              ushort
+   NB lines                 109845
+   Min date                 2012-06-27 16:43:00
+   Max date                 2014-01-28 21:25:30
+   Min value                350 (2013-12-21 10:22:21)
+   Max value                6710 (2013-08-07 18:57:14)
+   Avg value                1578
+   Avg delta (round ratio)  303
+   Total size               1.361328125 Mo
+
+Show last sensor value
+
+.. code-block:: console
+
+   $ sk_command -a last -s domsrv:teleinfo:papp -t ushort
+
+   1730
+
+Show datas sensor
+
+.. code-block:: console
+
+   $ sk_command -a sensordatas -s domsrv:teleinfo:papp -t ushort -v tail=10
+
+   Time                   Value
+   -------------------  -------
+   2014-01-28 20:35:24     1640
+   2014-01-28 20:43:33     1700
+   2014-01-28 20:45:50     1680
+   2014-01-28 20:45:55     1580
+   2014-01-28 20:46:51     1660
+   2014-01-28 21:20:01     1580
+   2014-01-28 21:20:17     1590
+   2014-01-28 21:20:22     1680
+   2014-01-28 21:22:13     1740
+   2014-01-28 21:27:46     1730
+
+
+Reduce data
+
+.. code-block:: console
+
+   # Before reduce
+
+   Title                    Value
+   -----------------------  --------------------------
+   Sensorid                 domsrv:teleinfo:papp
+   NB lines                 514671
+   Min date                 2012-06-27 18:43:00
+   Max date                 2014-01-25 10:27:15
+   Min value                350 (2013-11-17 05:24:23)
+   Max value                6710 (2013-08-07 20:57:14)
+   Avg value                1301
+   Avg delta (round ratio)  76
+   Total size               6.3798828125 Mo
+
+   # reduce with 80 delta value
+
+   $ sk_command -a setproperty -s domsrv:teleinfo:papp -t ushort -v roundvalue=80
+   $ sk_command -a reduce -s domsrv:teleinfo:papp -t ushort
+
+   # Reduce result
+
+   Title                    Value
+   -----------------------  --------------------------
+   Sensorid                 domsrv:teleinfo:papp
+   NB lines                 107304
+   Min date                 2012-06-27 18:43:00
+   Max date                 2014-01-25 10:27:15
+   Min value                350 (2013-12-21 11:22:21)
+   Max value                6710 (2013-08-07 20:57:14)
+   Avg value                1575
+   Avg delta (round ratio)  302
+   Total size               1.330078125 Mo
+
+**Compression ratio = 480%**
+
+You can also use the `serialkiller-plugins <https://github.com/badele/serialkiller-plugins>`_ for push the sensors results. See the `serialkiller-plugins example <https://github.com/badele/serialkiller-plugins/blob/master/README.rst#script-example>`_
+
+You can also point your web navigator to http://youipserver for list all JSON functions: 
 
 .. code-block:: console
 
