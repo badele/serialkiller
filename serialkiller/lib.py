@@ -419,10 +419,7 @@ class Sensor(object):
                     test = '%s %s' % (obj.value, self.configs['limit_%s' % limitname])
                     res = eval(test)
                     if res:
-                        state = '%s' % limitname
-
-            if state:
-                obj.state = state
+                        obj.state = '%s' % limitname
 
     def datasToJSON(self):
         jsondatas = []
@@ -657,15 +654,19 @@ class SerialKillers(object):
     def getLastSensorsValue(self):
         lasts = dict()
         for sensor in self.getSensorsIds():
-            obj = Sensor(self._directory, sensor)
-            obj.tail(2, addmetainfo=True)
+            try:
+                obj = Sensor(self._directory, sensor)
+                obj.tail(2, addmetainfo=True)
 
-            lsize = len(obj.datas)
-            if lsize > 0:
-                idx = min(1, lsize - 1)
-                lasts[sensor] = dict()
-                lasts[sensor]['configs'] = obj.configs
-                lasts[sensor]['last'] = obj.datas[idx]
+                lsize = len(obj.datas)
+                if lsize > 0:
+                    idx = min(1, lsize - 1)
+                    lasts[sensor] = dict()
+                    lasts[sensor]['configs'] = obj.configs
+                    lasts[sensor]['last'] = obj.datas[idx]
+            except Exception, e:
+                print "Exception on %s sensor" % sensor
+                raise
 
         return lasts
 
