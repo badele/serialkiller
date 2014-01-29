@@ -156,12 +156,12 @@ class default(object):
             if type(self.time) == str:
                 self.time = float(self.time)
 
-    def convert2text(self, textconverter):
-        if 'convert' not in textconverter:
+    def convert2text(self, configs):
+        if 'convert' not in configs:
             return self.value
 
         key = str(self.value)
-        return textconverter['convert']['value'][key]
+        return configs['convert'][key]
 
     def typeToBinary(self):
         mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
