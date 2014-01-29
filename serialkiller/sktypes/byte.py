@@ -36,6 +36,9 @@ class byte(default):
                 'value': 1,
                 'comment': True
             },
+            'limit_info': {
+                'value': '>= 0',
+            },
             'limit_crit': {
                 'value': '> 90',
                 'comment': True
