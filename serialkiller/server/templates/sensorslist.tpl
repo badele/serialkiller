@@ -39,21 +39,21 @@
         </tr>
       </thead>
       <tbody>
-      {% for key in keys %}
+      {% for k, v in lasts.items()|sort %}
         <tr>
-          <td><a href="/{{ key }}.html">{{ key }}</a></td>
-          <td>{{ lasts[key]['configs'].type }}</td>
-          {% if lasts[key]['last'].unavailable %}
-          <td><span class="label label-danger">{{ lasts[key]['last'].time|datetime }}</span></td>
+          <td><a href="/{{ k }}.html">{{ k }}</a></td>
+          <td>{{ v['configs'].type }}</td>
+          {% if v['last'].unavailable %}
+          <td><span class="label label-danger">{{ v['last'].time|datetime }}</span></td>
           {% else %}
-          <td><span class="label label-info">{{ lasts[key]['last'].time|datetime }}</span></td>
+          <td><span class="label label-info">{{ v['last'].time|datetime }}</span></td>
 {% endif %}
-          <td>{{ lasts[key]['last'].since|sincetime }}</td>
-          <td>{{ lasts[key]['configs']['title'] }}</td>
-          {% if state[lasts[key]['last'].state] %}
-          <td><span class="label label-{{state[lasts[key]['last'].state]}}">{{ lasts[key]['last'].text }}</span></td>
+          <td>{{ v['last'].since|sincetime }}</td>
+          <td>{{ v['configs']['title'] }}</td>
+          {% if state[v['last'].state] %}
+          <td><span class="label label-{{state[v['last'].state]}}">{{ v['last'].text }}</span></td>
           {% else %}
-          <td>{{ lasts[key]['last'].text }}</td>
+          <td>{{ v['last'].text }}</td>
 {% endif %}
         </tr>
       {% endfor %}

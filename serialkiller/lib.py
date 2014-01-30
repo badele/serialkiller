@@ -719,7 +719,6 @@ class SerialKillers(object):
         # Render
         content = template.render(
             {
-                'keys': sorted(lasts),
                 'lasts': lasts,
                 'generated_time': time.time(),
                 'state': {
