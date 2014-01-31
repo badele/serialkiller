@@ -10,9 +10,6 @@
 .. disableimage:: https://pypip.in/d/serialkiller/badge.png
    :target: https://crate.io/packages/serialkiller/
 
-.. figure:: architecture.png
-   :alt: architecture example
-
 .. figure:: screenshot.png
    :alt: sample result
 
@@ -26,8 +23,10 @@ About
 - In http API REST mode
 - From library
 
-Configuration
+Sample architecture
 
+.. figure:: architecture.png
+   :alt: architecture example
 
 Installing
 ==========
