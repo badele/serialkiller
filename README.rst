@@ -83,6 +83,27 @@ Example, if now you would like add a minimal sensor (ex: online computer) with a
    data = sktypes.newObj('byte', value=255)
    obj.addValue(data)
 
+List last sensors value
+
+.. code-block:: console
+
+    $ sk_command -a sensorslist
+
+    SensorId                       S    Time                 Title                                             Value
+    -----------------------------  ---  -------------------  ------------------------------------------------  -----------
+    livingroom:demo:online              2014-01-31 08:50:55  Demo                                              Online
+    livingroom:vaio:inuse          X    2014-01-30 23:17:14  Utilisation du poste                              Locked
+    washroom:teleinfo:isousc            2014-01-31 08:51:00  Ampere souscrit                                   30
+    livingroom:p03:online               2014-01-31 08:51:00  Serveur de virtualisation                         Online
+    livingroom:vaio:online              2014-01-31 08:51:00  Portable stephanie                                Offline
+    washroom:teleinfo:hchp              2014-01-31 08:51:00  Heure pleine                                      39674892
+    washroom:teleinfo:papp              2014-01-31 08:51:00  Puissance en cours                                1980
+    washroom:video:online               2014-01-31 08:50:55  Video server                                      Online
+    livingroom:internet:available       2014-01-31 08:50:55  Conectiviteinternet                               Available
+    washroom:teleinfo:iinst        X    2014-01-31 00:22:47  Ampere en cours                                   10
+    city:weather:sunshine               2014-01-31 08:50:55  Crepuscule du soleil                              Plein jours
+
+
 Show sensor information
 
 .. code-block:: console
