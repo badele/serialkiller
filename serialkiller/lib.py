@@ -689,11 +689,13 @@ class SerialKillers(object):
         lines = []
         for sensorid, value in lasts.iteritems():
             state = ''
-            if value.unavailable:
+            last = value['last']
+
+            if last.unavailable:
                 state = 'X'
 
             # Add last value
-            line = [sensorid, state, format_datetime(value.time), value.metadata['configs']['title'], value.text]
+            line = [sensorid, state, format_datetime(last.time), last.metadata['configs']['title'], last.text]
             lines.append(line)
 
         header = ['SensorId', 'S', 'Time', 'Title', 'Value']
