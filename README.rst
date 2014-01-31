@@ -26,7 +26,6 @@ About
 Configuration
 
 
-
 Installing
 ==========
 
@@ -64,8 +63,22 @@ Now you can run the serialkiller standalone server with `sk_standalone`
 
 .. code-block:: console
 
-   sk_standalone &
+   sk_server &
 
+You can also use the supervisor, it's prefered solution
+
+Example of sk_server supervisor configuration
+
+.. code-block:: console
+
+    [program:sk_server]
+    command=sk_server
+    environment=SERIALKILLER_SETTINGS="/etc/sk_config.cfg"
+    user=username
+    autostart=true
+    autorestart=true
+    redirect_stderr=true
+    startsecs=5
 
 Example, if now you would like add a minimal sensor (ex: online computer) with auto-configuration type sensor
 
