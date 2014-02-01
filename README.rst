@@ -23,6 +23,8 @@ About
 - In http API REST mode
 - From library
 
+In future, ``serialkiller`` will be run in centralized or decentralized mode
+
 Sample architecture
 
 .. figure:: architecture.png
