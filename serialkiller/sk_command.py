@@ -10,7 +10,6 @@ __version__ = '0.0.1'
 # System
 import os
 import sys
-import imp
 import fnmatch
 import argparse
 from datetime import datetime
@@ -212,7 +211,6 @@ def requireSensorID(args):
     if not args.sensorid:
         print("Please define sensorid")
         sys.exit(1)
-        return
 
 def requireSensorType(args):
     if not args.type:
@@ -329,6 +327,9 @@ def loadConfig():
             configs[name.strip()] = eval(var)
 
 def main():
+    # Load configuration
+    loadConfig()
+
     # Parse arguments
     args = parse_arguments(sys.argv[1:])  # pragma: no cover
 
@@ -344,9 +345,6 @@ def main():
 
         if 'last' in args.action:
             getLastsValue(args)
-
-        if 'listsensors' in args.action:
-            listSensors(args)
 
         if 'property' in args.action:
             setProperty(args)
@@ -371,5 +369,4 @@ def main():
 
 
 if __name__ == '__main__':
-    loadConfig()
     main()  # pragma: no cover
