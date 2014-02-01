@@ -20,10 +20,36 @@ from serialkiller import sktypes
 
 class TestPackages(unittest.TestCase):
 
+    def setUp(self):
+        self._create_sensors()
+
+    def _create_sensors(self):
+        # Init random
+        random.seed(0)
+
+        # Boolean
+        sensorname = 'test:sensor:boolean'
+        sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':','/')
+        sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':','/')
+        self._reset_file(sensorconf)
+        self._reset_file(sensordata)
+        self._generate_boolean(sensorname, 1000)
+
+        # byte
+        sensorname = 'test:sensor:byte'
+        sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':','/')
+        sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':','/')
+        self._reset_file(sensorconf)
+        self._reset_file(sensordata)
+        self._generate_byte(sensorname, 1000)
+
+
     def _check_md5file(self, filename):
+        """Check integrity file"""
         return hashlib.md5(open(filename).read()).hexdigest()
 
     def _reset_file(self, filename):
+        """Delete file"""
         if os.path.exists(filename):
             os.remove(filename)
 
@@ -56,31 +82,38 @@ class TestPackages(unittest.TestCase):
             data = sktypes.newObj(type, time=i*60, value=value)
             obj.addValue(data)
 
-
-    def test_create_sensors(self):
-        # Init random
-        random.seed(0)
-
+    def test_check_integrity(self):
         # Boolean
         sensorname = 'test:sensor:boolean'
         sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':','/')
         sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':','/')
-        self._reset_file(sensorconf)
-        self._reset_file(sensordata)
-        self._generate_boolean(sensorname, 1000)
         self.assertEqual(self._check_md5file(sensorconf), '5c1fdaffde36866bc1ee844bbc0bae53')
         self.assertEqual(self._check_md5file(sensordata), '7fb2b1801c064a1964901ac93c3e0b7e')
 
-        # byte
+        # Byte
         sensorname = 'test:sensor:byte'
         sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':','/')
         sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':','/')
-        self._reset_file(sensorconf)
-        self._reset_file(sensordata)
-        self._generate_byte(sensorname, 1000)
         self.assertEqual(self._check_md5file(sensorconf), '775f3b047327ca8704ce093945d23afa')
         self.assertEqual(self._check_md5file(sensordata), '9e2279491bf5f9afc3ab377038251c7f')
 
+
+    def test_check_last(self):
+        # Boolean
+        sensorname = 'test:sensor:boolean'
+        sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':','/')
+        sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':','/')
+        obj = lib.Sensor('/tmp/sensors', sensorname, 'boolean')
+        obj.tail(1)
+        self.assertEqual(obj.last().value, 0)
+
+        # Byte
+        sensorname = 'test:sensor:byte'
+        sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':','/')
+        sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':','/')
+        obj = lib.Sensor('/tmp/sensors', sensorname, 'byte')
+        obj.tail(1)
+        self.assertEqual(obj.last().value, 138)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
