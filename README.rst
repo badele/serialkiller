@@ -222,3 +222,5 @@ You can also point your web navigator to http://youipserver for list all JSON fu
          "/api/1.0/list": "List all last sensors"
    }
 
+
+You can also see the result directely in my personnal `website <http://domotique.adele.im>`_
