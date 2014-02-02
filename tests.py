@@ -104,7 +104,6 @@ class TestPackages(unittest.TestCase):
         self.assertEqual(obj.last().text, text)
         self.assertEqual(obj.last().typeToBinary(), tobinary)
 
-
     def test_check_integrities(self):
         self._check_integrity('boolean', '5c1fdaffde36866bc1ee844bbc0bae53', '7fb2b1801c064a1964901ac93c3e0b7e')
         self._check_integrity('byte', '775f3b047327ca8704ce093945d23afa', '9e2279491bf5f9afc3ab377038251c7f')
