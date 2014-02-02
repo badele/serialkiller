@@ -32,7 +32,7 @@ def saveto(filename, content):
 
 
 class Sensor(object):
-    def __init__(self, directory, sensorid, type='byte', ext=".data"):
+    def __init__(self, directory, sensorid, ptype='byte', ext=".data"):
         # Check sensorid param
         ids = sensorid.split(':')
         if len(ids) != 3:
@@ -67,15 +67,15 @@ class Sensor(object):
 
         if not calctype:
             # Not found type in sensor configuration
-            self.configs['type'] = type
-            calctype = type
+            self.configs['type'] = ptype
+            calctype = ptype
 
         # Try to load type object
         sktypes.newObj(calctype)
         try:
             self._typeobj = sktypes.newObj(calctype)
         except ImportError:
-            raise Exception("The %s type not exist" % type)
+            raise Exception("The %s type not exist" % ptype)
 
         self._configs = self.readConfigs(update=True)
 
@@ -107,7 +107,7 @@ class Sensor(object):
     @property
     def title(self):
         """Get title"""
-        if 'title' not in self.config:
+        if 'title' not in self.configs:
             return ''
 
         return self.configs['title']
@@ -167,8 +167,12 @@ class Sensor(object):
             else:
                 self.addAtEnd(obj)
 
-    def completeConfigsForType(self, configs=dict()):
+    def completeConfigsForType(self, configs=None):
         """Complete configs list with not seted configs"""
+        if not configs:
+            configs = dict()
+
+        # noinspection PyProtectedMember
         for configname, value in self._typeobj._defaultconfigs.iteritems():
             if not configname in configs and '#%s' % configname:
                 # t
@@ -188,7 +192,6 @@ class Sensor(object):
 
     def readConfigs(self, update=False):
         # Try open file
-        lines = []
         filename = self.getFilename('.conf')
 
         configs = {}
@@ -204,6 +207,7 @@ class Sensor(object):
             changeconfigs_size = len(changeconfigs)
             changed = (oldconfig_size - changeconfigs_size) != 0
             if changed:
+                configs = changeconfigs
                 self.saveConfigs(configs)
 
         return configs
@@ -218,7 +222,7 @@ class Sensor(object):
             f.write(jsontext)
             f.close()
 
-    def setProperty(self, pname, pvalue, savetofile=True):
+    def setProperty(self, pname, pvalue):
         commented = '#%s' % pname
         if pvalue:
             if commented in self._configs:
@@ -233,7 +237,7 @@ class Sensor(object):
 
     def setConfigs(self, **kwargs):
         for k, v in kwargs.iteritems():
-            self.setProperty(k, v, False)
+            self.setProperty(k, v)
 
         self.saveConfigs(self._configs)
 
@@ -435,12 +439,12 @@ class Sensor(object):
         if 'tail' in kwargs:
             tail = int(kwargs['tail'])
 
+        tmpfile = None
         try:
             fcntl.flock(self._file, fcntl.LOCK_EX)
 
-
             # Copy file
-            shutil.copy2(self._filename,self.getFilename('.copy'))
+            shutil.copy2(self._filename, self.getFilename('.copy'))
 
             tmpfile = open(self.getFilename('.copy'))
             if tmpfile:
@@ -501,8 +505,6 @@ class Sensor(object):
 
             # Get the size of first block
             sizetoread = self.readBlockSize(self._file)
-                
-
 
             # Compute statistic
             oldvalue = None
@@ -650,7 +652,6 @@ class SerialKillers(object):
 
         return matches
 
-
     def getLastSensorsValue(self):
         lasts = dict()
         for sensor in self.getSensorsIds():
@@ -664,7 +665,7 @@ class SerialKillers(object):
                     lasts[sensor] = dict()
                     lasts[sensor]['configs'] = obj.configs
                     lasts[sensor]['last'] = obj.datas[idx]
-            except Exception, e:
+            except Exception:
                 print "Exception on %s sensor" % sensor
                 raise
 
@@ -672,7 +673,6 @@ class SerialKillers(object):
 
     def convertSensorsListTo(self, **kwargs):
         # Convert
-        content = ""
         if 'format' in kwargs:
             if kwargs['format'] == 'html':
                 content = self.convertSensorsList2Html()

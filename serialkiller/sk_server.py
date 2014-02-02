@@ -8,13 +8,11 @@ __version__ = '0.0.1'
 __apiversion__ = '1.0'
 
 # System
-import os
-import json
 import logging
 import urlparse
 
 # Third party
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from flask_failsafe import failsafe
 
 # serialkiller

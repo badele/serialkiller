@@ -24,6 +24,7 @@ configs = {
     'STORAGE': '/tmp/sensors',
 }
 
+
 def addValue(args):
     requireSensorID(args)
     requireSensorType(args)
@@ -96,7 +97,7 @@ def sensorInfos(args):
         ['Max date', format_datetime(infos['maxdate'])],
         ['Min value', '%s (%s)' % (str(infos['minvalue']), format_datetime(infos['minvaluedate']))],
         ['Max value', '%s (%s)' % (str(infos['maxvalue']), format_datetime(infos['maxvaluedate']))],
-#        ['Avg size', str(infos['avgsize'])],
+        #        ['Avg size', str(infos['avgsize'])],
         ['Avg value', str(infos['avgvalue'])],
         ['Avg delta (round ratio)', str(infos['avgdelta'])],
         ['Total size', '%s Mo' % str(infos['avgsize'] * infos['nblines'] / 1024 / 1024.0)],
@@ -212,6 +213,7 @@ def requireSensorID(args):
         print("Please define sensorid")
         sys.exit(1)
 
+
 def requireSensorType(args):
     if not args.type:
         print("Please define type value with -t")
@@ -325,6 +327,7 @@ def loadConfig():
         for line in myfile:
             name, var = line.partition("=")[::2]
             configs[name.strip()] = eval(var)
+
 
 def main():
     # Load configuration

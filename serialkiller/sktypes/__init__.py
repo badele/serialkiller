@@ -11,6 +11,7 @@ import sys
 import time
 import struct
 
+
 # Load object type module
 def import_objtype(modname, name):
     impmodule = __import__(modname, fromlist=[name])
@@ -158,16 +159,18 @@ class default(object):
 
     def convert2text(self, configs):
         if 'convert' not in configs:
-            return self.value
+            return str(self.value)
 
         key = str(self.value)
         return configs['convert'][key]
 
     def typeToBinary(self):
+        # noinspection PyProtectedMember
         mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
         raise NotImplementedError(mess)
 
     def decodeBinary(self, content):
         """Convert from Binary"""
+        # noinspection PyProtectedMember
         mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
         raise NotImplementedError(mess)
