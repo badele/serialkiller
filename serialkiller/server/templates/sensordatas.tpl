@@ -67,6 +67,15 @@ rect.pane {
   pointer-events: all;
 }
 
+    footer {
+    bottom: 0;
+    clear: both;
+    color: #777777;
+    height: 3em;
+    text-align: center;
+}
+
+
 
     </style>
 
@@ -164,6 +173,18 @@ function draw() {
   svg.select("path.line").attr("d", line);
 }
     </script>
+
+      <footer>
+        <iframe src="http://ghbtns.com/github-btn.html?user=badele&repo=serialkiller&type=watch&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+
+        <iframe src="http://ghbtns.com/github-btn.html?user=badele&repo=serialkiller&type=fork&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
+    </br >
+        Created by Bruno Adelé
+  </br>
+        © <a href="https://github.com/badele/serialkiller">Serialkiller</a>
+    </footer>
 
   </body>
 </html>

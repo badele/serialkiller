@@ -22,6 +22,14 @@
     padding: 8px;
     vertical-align: top;
       }
+
+footer {
+    bottom: 0;
+    clear: both;
+    color: #777777;
+    height: 3em;
+    text-align: center;
+}
     </style>
     <div class="page-header">
       <h1>Sensors states<small>&nbsp;{{ generated_time|datetime }}</small></h1>
@@ -71,7 +79,17 @@
       <span class="label label-info">Ok</span><b/>
       <span class="label label-danger">Sensor unnavailable</span><b/>
     </div>
+    <footer>
+        <iframe src="http://ghbtns.com/github-btn.html?user=badele&repo=serialkiller&type=watch&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
 
+        <iframe src="http://ghbtns.com/github-btn.html?user=badele&repo=serialkiller&type=fork&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
+    </br >
+        Created by Bruno Adelé
+  </br>
+        © <a href="https://github.com/badele/serialkiller">Serialkiller</a>
+    </footer>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://code.jquery.com/jquery.js"></script>
