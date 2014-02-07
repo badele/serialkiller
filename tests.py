@@ -145,7 +145,7 @@ class TestPackages(unittest.TestCase):
         self._check_last('byte', 138, '138' ,'\x02\x00\x00\x00\x00\x80D\xed@\x8a')
         self._check_last('ushort', 40295, '40295' ,'\x04\x00\x00\x00\x00\x80D\xed@g\x9d')
         self._check_last('ulong', 130047754, '130047754' ,'\x05\x00\x00\x00\x00\x80D\xed@\n_\xc0\x07')
-        self._check_last('float', 3.210708047208364e+27, '3.21070804721e+27' ,'\x06\x00\x00\x00\x00\x80D\xed@^\xfd%m')
+        self._check_last('float', 3.210708047208364e+27, '3210708047208364204214976512.00', '\x06\x00\x00\x00\x00\x80D\xed@^\xfd%m')
 
     def test_checkobj(self):
         self._checkobj('boolean')
