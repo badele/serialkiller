@@ -71,7 +71,6 @@ class Sensor(object):
             calctype = ptype
 
         # Try to load type object
-        sktypes.newObj(calctype)
         try:
             self._typeobj = sktypes.newObj(calctype)
         except ImportError:

@@ -7,13 +7,13 @@ __description__ = """timeseries database with reduce system"""
 __license__ = 'GPL'
 __version__ = '0.0.1'
 
-from serialkiller.sktypes.byte import byte
+from serialkiller.sktypes.skbyte import SkByte
 
 
-class boolean(byte):
+class SkBoolean(SkByte):
     """Generic Class for type"""
     def __init__(self, **kwargs):
-        super(boolean, self).__init__(**kwargs)
+        super(SkBoolean, self).__init__(**kwargs)
         self._codebin = 0x3
 
         # Set default properties
@@ -41,16 +41,18 @@ class boolean(byte):
         self._defaultconfigs = tmpdict
 
     def checkMetadata(self):
-        super(boolean, self).checkMetadata()
+        super(SkBoolean, self).checkMetadata()
 
         # Check value
         if not self.value:
             return
 
+        checkvalue = None
         if type(self.value) == str or type(self.value):
-            self.metadata['value'] = int(self.value)
+            checkvalue = int(self.value)
 
-        if self.value == 0 or self.value == 255:
+        if checkvalue == 0 or checkvalue == 255:
+            self.metadata['value'] = checkvalue
             return
 
         raise Exception("Value %s not authorized in %s type" % (self.value, self.type))

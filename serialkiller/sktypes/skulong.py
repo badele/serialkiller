@@ -9,35 +9,25 @@ __version__ = '0.0.1'
 
 import struct
 
-from serialkiller.sktypes import default
+from serialkiller.sktypes import SkDefault
 
 
-class byte(default):
+class SkUlong(SkDefault):
     """Generic Class for type"""
     def __init__(self, **kwargs):
-        super(byte, self).__init__(**kwargs)
-        self._codebin = 0x2
+        super(SkUlong, self).__init__(**kwargs)
+        self._codebin = 0x5
 
         # Set default properties
         tmpdict = dict(self._defaultconfigs)
         tmpdict.update({
-            'convert': {
-                'value': {
-                    0: 'Off',
-                    255: 'On',
-                },
+            'autoset': {
+                'value': 1,
                 'comment': True
             },
             'roundvalue': {
                 'value': 10,
                 'comment': True
-            },
-            'autoset': {
-                'value': 1,
-                'comment': True
-            },
-            'limit_info': {
-                'value': '>= 0',
             },
             'limit_crit': {
                 'value': '> 90',
@@ -54,7 +44,7 @@ class byte(default):
         )
         self._defaultconfigs = tmpdict
 
-    @default.value.setter
+    @SkDefault.value.setter
     def value(self, value):
         if value:
             self._metadata['value'] = int(value)
@@ -65,30 +55,31 @@ class byte(default):
 
     def typeToBinary(self):
         """Convert to Binary"""
-        line = struct.pack('=BdB', self.codebin, self.time, self.value)
+        line = struct.pack('=BdL', self.codebin, self.time, self.value)
         return line
 
     def decodeBinary(self, content):
         """Binary to skline"""
 
-        (sizes, typeid, datetime, value, sizee) = struct.unpack('=BBdBB', content)
+        (sizes, typeid, datetime, value, sizee) = struct.unpack('=BBdLB', content)
 
         self.metadata['size'] = sizes
         self.metadata['time'] = datetime
         self.metadata['value'] = value
 
     def checkMetadata(self):
-        super(byte, self).checkMetadata()
+        super(SkUlong, self).checkMetadata()
 
         # Check value
         if not self.value:
             return
 
+        checkvalue = None
         if type(self.value) == str or type(self.value):
-            self.metadata['value'] = int(self.value)
+            checkvalue = int(self.value)
 
-        if self.value >= 0 and self.value <= 255:
+        if checkvalue >= 0 and checkvalue <= 4294967295:
+            self.metadata['value'] = checkvalue
             return
 
-        print self.metadata['value']
         raise Exception("Value %s not authorized in %s type" % (self.value, self.type))

@@ -9,14 +9,14 @@ __version__ = '0.0.1'
 
 import struct
 
-from serialkiller.sktypes import default
+from serialkiller.sktypes import SkDefault
 
 
-class skfloat(default):
+class SkFloat(SkDefault):
     """Generic Class for type"""
     def __init__(self, **kwargs):
-        super(skfloat, self).__init__(**kwargs)
-        self._codebin = 0x4
+        super(SkFloat, self).__init__(**kwargs)
+        self._codebin = 0x6
 
         # Set default properties
         tmpdict = dict(self._defaultconfigs)
@@ -44,7 +44,7 @@ class skfloat(default):
         )
         self._defaultconfigs = tmpdict
 
-    @default.value.setter
+    @SkDefault.value.setter
     def value(self, value):
         if value:
             self._metadata['value'] = float(value)
@@ -68,16 +68,18 @@ class skfloat(default):
         self.metadata['value'] = value
 
     def checkMetadata(self):
-        super(skfloat, self).checkMetadata()
+        super(SkFloat, self).checkMetadata()
 
         # Check value
         if not self.value:
             return
 
+        checkvalue = None
         if type(self.value) == str or type(self.value):
-            self.metadata['value'] = float(self.value)
+            checkvalue = float(self.value)
 
-        # if self.value >= 3.4*10-38 and self.value <= 4294967295:
-        return
+        if checkvalue >= .2250738585072014e-308 and checkvalue <= 1.7976931348623157e+308:
+            self.metadata['value'] = checkvalue
+            return
 
         raise Exception("Value %s not authorized in %s type" % (self.value, self.type))

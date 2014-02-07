@@ -11,6 +11,13 @@ import sys
 import time
 import struct
 
+# Codebin
+# 0x2 = SkByte
+# 0x3 = SkBoolean
+# 0x4 = SkUshort
+# 0x5 = SkUlong
+# 0x6 = SkFloat
+
 
 # Load object type module
 def import_objtype(modname, name):
@@ -20,13 +27,13 @@ def import_objtype(modname, name):
 
 # Intencies object type
 def newObj(name, **kwargs):
-    modname = 'serialkiller.sktypes.%s' % name
-    objtype = import_objtype(modname, name)
+    modname = 'serialkiller.sktypes.sk%s' % name
+    objtype = import_objtype(modname, 'Sk%s' % name.capitalize())
 
     return objtype(**kwargs)
 
 
-class default(object):
+class SkDefault(object):
     """Generic Class for type"""
     def __init__(self, **kwargs):
 
@@ -159,6 +166,9 @@ class default(object):
 
     def convert2text(self, configs):
         if 'convert' not in configs:
+            if self.type == 'SkFloat':
+                return "%.2f" % self.value
+
             return str(self.value)
 
         key = str(self.value)
