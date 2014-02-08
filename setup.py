@@ -46,7 +46,7 @@ def required(filename):
 
 setup(
     name="serialkiller",
-    version="0.0.1",
+    version="0.0.2",
     description="timeseries database with reduce system",
     long_description=rst('README.rst') + rst('CHANGELOG.txt'),
     author="Bruno Adelé",

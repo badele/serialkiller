@@ -5,7 +5,7 @@ __authors__ = 'Bruno Adelé <bruno@adele.im>'
 __copyright__ = 'Copyright (C) 2013 Bruno Adelé'
 __description__ = """timeseries database with reduce system"""
 __license__ = 'GPL'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 import sys
 import time
