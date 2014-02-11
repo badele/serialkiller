@@ -173,7 +173,7 @@ class Sensor(object):
 
         # noinspection PyProtectedMember
         for configname, value in self._typeobj._defaultconfigs.iteritems():
-            if not configname in configs and '#%s' % configname:
+            if configname not in configs and '#%s' % configname not in configs:
                 # t
                 comment = ''
                 if 'comment' in value and value['comment']:
