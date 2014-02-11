@@ -1,5 +1,6 @@
 include README.rst
 include LICENSE
+include CHANGELOG.txt
 include tests.py
 include serialkiller/sk_server.cfg
 recursive-include serialkiller/server *.css *.js *.tpl
