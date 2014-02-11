@@ -63,9 +63,9 @@
         <td>{{ v['last'].since|sincetime }}</td>
         <td>{{ v['configs']['title'] }}</td>
         {% if state[v['last'].state] %}
-        <td><span class="label label-{{state[v['last'].state]}}">{{ v['last'].text }}</span></td>
+        <td><i class="fa fa-camera-retro"></i>&nbsp;<span class="label label-{{state[v['last'].state]}}">{{ v['last'].text }}</span></td>
         {% else %}
-        <td>{{ v['last'].text }}</td>
+        <td><i class="fa fa-camera-retro"></i>&nbsp;{{ v['last'].text }}</td>
         {% endif %}
     </tr>
     {% endfor %}
