@@ -51,21 +51,21 @@
     </tr>
     </thead>
     <tbody>
-    {% for k, v in lasts.items()|sort %}
+    {% for sensorid, sensor in lasts.items()|sort %}
     <tr>
-        <td><a href="/{{ k }}.html">{{ k }}</a></td>
-        <td>{{ v['configs'].type }}</td>
-        {% if v['last'].unavailable %}
-        <td><span class="label label-danger">{{ v['last'].time|datetime }}</span></td>
+        <td><a href="/{{ sensorid }}.html">{{ sensorid }}</a></td>
+        <td>{{ sensor['configs'].type }}</td>
+        {% if sensor['last'].unavailable %}
+        <td><span class="label label-danger">{{ sensor['last'].time|datetime }}</span></td>
         {% else %}
-        <td><span class="label label-info">{{ v['last'].time|datetime }}</span></td>
+        <td><span class="label label-info">{{ sensor['last'].time|datetime }}</span></td>
         {% endif %}
-        <td>{{ v['last'].since|sincetime }}</td>
-        <td>{{ v['configs']['title'] }}</td>
-        {% if state[v['last'].state] %}
-        <td><i class="fa fa-camera-retro"></i>&nbsp;<span class="label label-{{state[v['last'].state]}}">{{ v['last'].text }}</span></td>
+        <td>{{ sensor['last'].since|sincetime }}</td>
+        <td>{{ sensor['configs']['title'] }}</td>
+        {% if state[sensor['last'].state] %}
+        <td><i class="fa fa-camera-retro"></i>&nbsp;<span class="label label-{{state[sensor['last'].state]}}">{{ sensor['last'].text }}</span></td>
         {% else %}
-        <td><i class="fa fa-camera-retro"></i>&nbsp;{{ v['last'].text }}</td>
+        <td><i class="fa fa-camera-retro"></i>&nbsp;{{ sensor['last'].text }}</td>
         {% endif %}
     </tr>
     {% endfor %}
