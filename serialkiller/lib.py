@@ -418,11 +418,16 @@ class Sensor(object):
             check = ['crit', 'warn', 'succ', 'info', 'unkn']
             for limitname in check:
                 # Check crit in order 'crit', 'warn', 'succ', 'info', 'unkn'
-                if not obj.metadata['state'] and 'limit_%s' % limitname in self.configs:
-                    test = '%s %s' % (obj.value, self.configs['limit_%s' % limitname])
-                    res = eval(test)
-                    if res:
-                        obj.state = '%s' % limitname
+                if not obj.metadata['state']:
+                        if 'limit' in self.configs and 'limits' in self.configs['limit']:
+                            if limitname in self.configs['limit']['limits']:
+                                test = '%s %s' % (obj.value, self.configs['limit']['limits'][limitname])
+                                result = eval(test)
+
+                                if result:
+                                    obj.state = limitname
+
+
 
     def datasToJSON(self):
         jsondatas = []
@@ -608,13 +613,6 @@ class Sensor(object):
                 'samples': len(datas),
                 'datas': jsondatas,
                 'generated_time': time.time(),
-                'state': {
-                    'info': 'info',
-                    'crit': 'danger',
-                    'warn': 'warning',
-                    'succ': 'success',
-                    'unkn': 'default',
-                },
             }
         )
 

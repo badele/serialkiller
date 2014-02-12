@@ -42,35 +42,38 @@
 <table class="table">
     <thead>
     <tr>
-        <th>SensorId</th>
-        <th>Type</th>
-        <th>Date</th>
+        <th>Value</th>
         <th>Since</th>
         <th>Title</th>
-        <th>Value</th>
+        <th>Date</th>
+        <th>SensorId</th>
+        <th>Type</th>
     </tr>
     </thead>
     <tbody>
     {% for sensorid, sensor in lasts.items()|sort %}
     <tr>
-        <td><a href="/{{ sensorid }}.html">{{ sensorid }}</a></td>
-        <td>{{ sensor['configs'].type }}</td>
-        {% if sensor['last'].unavailable %}
-        <td><span class="label label-danger">{{ sensor['last'].time|datetime }}</span></td>
-        {% else %}
-        <td><span class="label label-info">{{ sensor['last'].time|datetime }}</span></td>
-        {% endif %}
-        <td>{{ sensor['last'].since|sincetime }}</td>
-        <td>{{ sensor['configs']['title'] }}</td>
         {% if state[sensor['last'].state] %}
         <td>
             {% if 'limit' in sensor['configs'] and 'icons' in sensor['configs']['limit'] %}
             <i class="fa {{sensor['configs']['limit']['icons'][sensor['last'].state] }} fa-fw"></i>&nbsp;
             {% endif %}
-            <span class="label label-{{state[sensor['last'].state]}}">{{ sensor['last'].text }}</span></td>
+            <span class="{% if 'limit' in sensor['configs'] and 'styles' in sensor['configs']['limit'] %}{{sensor['configs']['limit']['styles'][sensor['last'].state] }}{% endif%}">
+               {{ sensor['last'].text }}
+            </span>
+        </td>
         {% else %}
         <td><i class="fa fa-square-o fa-fw"></i>&nbsp;{{ sensor['last'].text }}</td>
         {% endif %}
+        <td>{{ sensor['last'].since|sincetime }}</td>
+        <td>{{ sensor['configs']['title'] }}</td>
+        {% if sensor['last'].unavailable %}
+        <td><i class="fa fa-warning fa-fw"></i><span>{{ sensor['last'].time|datetime }}</span></td>
+        {% else %}
+        <td>{{ sensor['last'].time|datetime }}</td>
+        {% endif %}
+        <td><a href="/{{ sensorid }}.html">{{ sensorid }}</a></td>
+        <td>{{ sensor['configs'].type }}</td>
     </tr>
     {% endfor %}
     </tbody>
