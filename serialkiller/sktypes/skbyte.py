@@ -50,7 +50,12 @@ class SkByte(SkDefault):
             'limit_succ': {
                 'value': '< 75',
                 'comment': True
-            }}
+            },
+            'format': {
+                'value': '"{} unit".format(self.value)',
+                'comment': True
+            }
+        }
         )
         self._defaultconfigs = tmpdict
 

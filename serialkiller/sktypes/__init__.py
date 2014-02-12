@@ -165,14 +165,22 @@ class SkDefault(object):
                 self.time = float(self.time)
 
     def convert2text(self, configs):
-        if 'convert' not in configs:
-            if self.type == 'SkFloat':
-                return "%.2f" % self.value
+        # Convert with format property
+        if 'format' in configs:
+            result = eval(configs['format'])
+            return result
 
-            return str(self.value)
+        # Convert with convert property
+        if 'convert' in configs:
+            key = str(self.value)
+            return configs['convert'][key]
 
-        key = str(self.value)
-        return configs['convert'][key]
+        # Try to convert in number
+        if self.type == 'SkFloat':
+            return "%.2f" % self.value
+
+        return str(self.value)
+
 
     def typeToBinary(self):
         # noinspection PyProtectedMember
