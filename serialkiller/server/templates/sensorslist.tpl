@@ -68,7 +68,7 @@
         <td>{{ sensor['last'].since|sincetime }}</td>
         <td>{{ sensor['configs']['title'] }}</td>
         {% if sensor['last'].unavailable %}
-        <td><i class="fa fa-warning fa-fw"></i><span>{{ sensor['last'].time|datetime }}</span></td>
+        <td><span>{{ sensor['last'].time|datetime }}</span><i class="fa fa-warning fa-fw"></i></td>
         {% else %}
         <td>{{ sensor['last'].time|datetime }}</td>
         {% endif %}
