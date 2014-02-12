@@ -63,9 +63,13 @@
         <td>{{ sensor['last'].since|sincetime }}</td>
         <td>{{ sensor['configs']['title'] }}</td>
         {% if state[sensor['last'].state] %}
-        <td><i class="fa fa-camera-retro"></i>&nbsp;<span class="label label-{{state[sensor['last'].state]}}">{{ sensor['last'].text }}</span></td>
+        <td>
+            {% if 'limit' in sensor['configs'] and 'icons' in sensor['configs']['limit'] %}
+            <i class="fa {{sensor['configs']['limit']['icons'][sensor['last'].state] }} fa-fw"></i>&nbsp;
+            {% endif %}
+            <span class="label label-{{state[sensor['last'].state]}}">{{ sensor['last'].text }}</span></td>
         {% else %}
-        <td><i class="fa fa-camera-retro"></i>&nbsp;{{ sensor['last'].text }}</td>
+        <td><i class="fa fa-square-o fa-fw"></i>&nbsp;{{ sensor['last'].text }}</td>
         {% endif %}
     </tr>
     {% endfor %}
