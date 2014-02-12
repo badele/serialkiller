@@ -78,7 +78,7 @@ class SkFloat(SkDefault):
         if type(self.value) == str or type(self.value):
             checkvalue = float(self.value)
 
-        if checkvalue >= .2250738585072014e-308 and checkvalue <= 1.7976931348623157e+308:
+        if checkvalue >= -1.7976931348623157e+308 and checkvalue <= 1.7976931348623157e+308:
             self.metadata['value'] = checkvalue
             return
 
