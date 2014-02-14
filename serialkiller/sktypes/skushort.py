@@ -26,7 +26,7 @@ class SkUshort(SkDefault):
                 'comment': True
             },
             'roundvalue': {
-                'value': 10,
+                'value': 0,
                 'comment': True
             },
             'limit_crit': {

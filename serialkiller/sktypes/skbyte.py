@@ -29,7 +29,7 @@ class SkByte(SkDefault):
                 'comment': True
             },
             'roundvalue': {
-                'value': 10,
+                'value': 0,
                 'comment': True
             },
             'autoset': {
