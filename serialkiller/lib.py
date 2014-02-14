@@ -684,7 +684,7 @@ class SerialKillers(object):
         lasts = self.getLastSensorsValue()
 
         lines = []
-        for sensorid, value in lasts.iteritems():
+        for sensorid, value in iter(sorted(lasts.iteritems())):
             state = ''
             last = value['last']
 
