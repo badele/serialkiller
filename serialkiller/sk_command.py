@@ -185,11 +185,11 @@ def autosetSensors(args):
 
 def getAvailableTypes():
     matches = []
-    for root, dirnames, filenames in os.walk('sktypes'):
+    for root, dirnames, filenames in os.walk('%s/sktypes' % os.path.dirname(__file__)):
         for filename in fnmatch.filter(filenames, '*.py'):
             filename = filename.replace('.py', '')
             if '__init__' not in filename:
-                matches.append(filename)
+                matches.append(filename[2:])
 
     return matches
 
