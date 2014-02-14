@@ -154,7 +154,7 @@ class Sensor(object):
                 delta1 = abs(obj.value - self.datas[1].value)
                 samevalue = delta0 <= roundvalue and delta1 <= roundvalue
             else:
-                samevalue = obj.value == self.datas[0].value and obj.value == self.datas[1].value
+                samevalue = str(obj.value) == str(self.datas[0].value) and str(obj.value) == str(self.datas[1].value)
 
             if samevalue:
                 try:
