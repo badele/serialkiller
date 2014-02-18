@@ -44,6 +44,13 @@ def listLastsSensor():
     content = obj.convertSensorsListTo(format='html')
     return content
 
+@app.route('/api/%s/last/<sensorid>' % __apiversion__, methods=['GET'])
+def lastValue(sensorid):
+    """List all last sensors"""
+    obj = lib.Sensor(app.config['STORAGE'], sensorid)
+    obj.tail(nb=2, addmetainfo=True)
+    return jsonify(obj.last().metadata)
+
 
 @app.route('/api/%s/addEvent/<sensorid>/<type>/<values>' % __apiversion__, methods=['GET'])
 def addEvent(sensorid, type, values):
