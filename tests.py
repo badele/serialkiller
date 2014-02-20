@@ -123,7 +123,7 @@ class TestPackages(unittest.TestCase):
 
         self.assertEqual(obj.last().type, 'Sk%s' % ptype.capitalize())
         self.assertEqual(obj.last().unavailable, True)
-        self.assertEqual(obj.last().metadata['unavailable'], True)
+        self.assertEqual(obj.last().metadata['computed']['unavailable'], True)
 
     def _check_last(self, ptype, value, text, tobinary):
         sensorname = 'test:sensor:%s' % ptype
@@ -134,11 +134,11 @@ class TestPackages(unittest.TestCase):
         self.assertEqual(obj.last().typeToBinary(), tobinary)
 
     def test_check_integrities(self):
-        self._check_integrity('boolean', '5c1fdaffde36866bc1ee844bbc0bae53', '7fb2b1801c064a1964901ac93c3e0b7e')
-        self._check_integrity('byte', '775f3b047327ca8704ce093945d23afa', '9e2279491bf5f9afc3ab377038251c7f')
-        self._check_integrity('ushort', '0dab730a79c64306ac8ba89be9b5f029', '9e6cd5b47c6229abb7d25c6da64952d8')
-        self._check_integrity('ulong', '2040be0749b1660b842c09c21326d5c1', 'f95e7b368998a0e0cfabf9c12104c1a9')
-        self._check_integrity('float', '4ff8acfab4abf095dba2db2af1166fca', '0c28b1b0006410d94cfe1a8ba34a0934')
+        self._check_integrity('boolean', '77dcb516acf4d80055859bc8281cd14a', '7fb2b1801c064a1964901ac93c3e0b7e')
+        self._check_integrity('byte', '05b55ffe6cea75d0360a53b82c70542a', '9e2279491bf5f9afc3ab377038251c7f')
+        self._check_integrity('ushort', '7d354b63799679d4b2bdd2e915487b6f', '9e6cd5b47c6229abb7d25c6da64952d8')
+        self._check_integrity('ulong', '48e7fc3054d919cd8ff8f5ef07f5c4a4', 'f95e7b368998a0e0cfabf9c12104c1a9')
+        self._check_integrity('float', '7a916a175feaf9150f887c2183f026c8', '0c28b1b0006410d94cfe1a8ba34a0934')
 
     def test_check_last(self):
         self._check_last('boolean', 0, 'Off' ,'\x03\x00\x00\x00\x00\x80D\xed@\x00')

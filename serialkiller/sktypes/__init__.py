@@ -10,6 +10,7 @@ __version__ = '0.0.2'
 import sys
 import time
 import struct
+from collections import defaultdict
 
 # Codebin
 # 0x2 = SkByte
@@ -38,7 +39,7 @@ class SkDefault(object):
     def __init__(self, **kwargs):
 
         # Set parameters
-        self._metadata = kwargs
+        self._metadata = defaultdict(lambda: None, **kwargs)
 
         if 'time' not in kwargs:
             self.time = None
@@ -76,7 +77,7 @@ class SkDefault(object):
     @property
     def value(self):
         """Get Value"""
-        return self.returnMetadata('value')
+        return self._metadata['value']
 
     @value.setter
     def value(self, pvalue):
@@ -86,7 +87,7 @@ class SkDefault(object):
     @property
     def time(self):
         """Get Time"""
-        return self.returnMetadata('time')
+        return self._metadata['time']
 
     @time.setter
     def time(self, value):
@@ -110,22 +111,22 @@ class SkDefault(object):
     @property
     def size(self):
         """Get Obj size"""
-        return self.returnMetadata('size')
+        return self._metadata['size']
 
     @property
     def state(self):
         """Get Value"""
-        return self.returnMetadata('state')
+        return self._metadata['computed']['state']
 
     @property
     def unavailable(self):
         """Get Value"""
-        return self.returnMetadata('unavailable')
+        return self._metadata['computed']['unavailable']
 
     @property
     def text(self):
         """Get text"""
-        return self.returnMetadata('text')
+        return self._metadata['computed']['text']
 
     # =======================
     # Get Metadata properties
@@ -133,21 +134,24 @@ class SkDefault(object):
 
     @state.setter
     def state(self, value):
-        self._metadata['state'] = value
+        if 'computed' not in self._metadata:
+            self._metadata['computed'] = defaultdict(lambda: None)
+
+        self._metadata['computed']['state'] = value
 
     @unavailable.setter
     def unavailable(self, value):
-        self._metadata['unavailable'] = value
+        if 'computed' not in self._metadata:
+            self._metadata['computed'] = defaultdict(lambda: None)
+
+        self._metadata['computed']['unavailable'] = value
 
     @text.setter
     def text(self, value):
-        self._metadata['text'] = value
+        if 'computed' not in self._metadata:
+            self._metadata['computed'] = defaultdict(lambda: None)
 
-    def returnMetadata(self, metadataname):
-        if metadataname not in self._metadata:
-            return None
-
-        return self._metadata[metadataname]
+        self._metadata['computed']['text'] = value
 
     def toBinary(self):
         """Convert to Binary"""
@@ -180,7 +184,6 @@ class SkDefault(object):
             return "%.2f" % self.value
 
         return str(self.value)
-
 
     def typeToBinary(self):
         # noinspection PyProtectedMember

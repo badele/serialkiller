@@ -418,7 +418,7 @@ class Sensor(object):
             check = ['crit', 'warn', 'succ', 'info', 'unkn']
             for limitname in check:
                 # Check crit in order 'crit', 'warn', 'succ', 'info', 'unkn'
-                if not obj.metadata['state']:
+                if not obj.metadata['computed']['state']:
                         if 'limit' in self.configs and 'limits' in self.configs['limit']:
                             if limitname in self.configs['limit']['limits']:
                                 test = '%s %s' % (obj.value, self.configs['limit']['limits'][limitname])
@@ -426,8 +426,6 @@ class Sensor(object):
 
                                 if result:
                                     obj.state = limitname
-
-
 
     def datasToJSON(self):
         jsondatas = []
