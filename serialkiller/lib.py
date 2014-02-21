@@ -404,14 +404,16 @@ class Sensor(object):
                 obj.since = None
 
             # Check if unavailable data
-            unavailable = 600
-            obj.unavailable = False
+            unavailableconf = 600
+            obj.unavailable = None
             if 'unavailable' in self.configs:
-                unavailable = float(self.configs['unavailable'])
+                unavailableconf = float(self.configs['unavailable'])
 
             now = time.time()
             delta = now - obj.time
-            obj.unavailable = delta >= unavailable
+            obj.unavailable = None
+            if delta >= unavailableconf:
+                obj.unavailable = delta
 
             # check limitation state
             obj.state = ''

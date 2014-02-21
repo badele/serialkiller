@@ -122,8 +122,8 @@ class TestPackages(unittest.TestCase):
         obj.tail(addmetainfo=True)
 
         self.assertEqual(obj.last().type, 'Sk%s' % ptype.capitalize())
-        self.assertEqual(obj.last().unavailable, True)
-        self.assertEqual(obj.last().metadata['computed']['unavailable'], True)
+        self.assertGreater(obj.last().unavailable, 1392910566)
+        self.assertEqual(obj.last().metadata['computed']['unavailable'], obj.last().unavailable)
 
     def _check_last(self, ptype, value, text, tobinary):
         sensorname = 'test:sensor:%s' % ptype
