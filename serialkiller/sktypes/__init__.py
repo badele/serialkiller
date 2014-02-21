@@ -119,6 +119,11 @@ class SkDefault(object):
         return self._metadata['computed']['state']
 
     @property
+    def since(self):
+        """Get Since value"""
+        return self._metadata['computed']['since']
+
+    @property
     def unavailable(self):
         """Get Value"""
         return self._metadata['computed']['unavailable']
@@ -138,6 +143,13 @@ class SkDefault(object):
             self._metadata['computed'] = defaultdict(lambda: None)
 
         self._metadata['computed']['state'] = value
+
+    @since.setter
+    def since(self, value):
+        if 'computed' not in self._metadata:
+            self._metadata['computed'] = defaultdict(lambda: None)
+
+        self._metadata['computed']['since'] = value
 
     @unavailable.setter
     def unavailable(self, value):
