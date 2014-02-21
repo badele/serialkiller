@@ -37,7 +37,7 @@ def index():
     return jsonify(func_list)
 
 
-@app.route('/api/%s/list' % __apiversion__, methods=['GET'])
+@app.route('/api/%s/sensors/list' % __apiversion__, methods=['GET'])
 def listLastsSensor():
     """List all last sensors"""
     obj = lib.SerialKillers(app.config['STORAGE'])
@@ -45,15 +45,15 @@ def listLastsSensor():
     return content
 
 
-@app.route('/api/%s/last/<sensorid>' % __apiversion__, methods=['GET'])
+@app.route('/api/%s/sensor/<sensorid>/last' % __apiversion__, methods=['GET'])
 def lastValue(sensorid):
-    """List all last sensors"""
+    """List last data for sensor in JSON"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid)
     obj.tail(nb=2, addmetainfo=True)
     return jsonify(obj.last().metadata)
 
 
-@app.route('/api/%s/addEvent/<sensorid>/<type>/<values>' % __apiversion__, methods=['GET'])
+@app.route('/api/%s/sensor/<sensorid>/addEvent/<type>/<values>' % __apiversion__, methods=['GET'])
 def addEvent(sensorid, type, values):
     """Add a new event, no deduplicate"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
@@ -63,7 +63,7 @@ def addEvent(sensorid, type, values):
     return "ok"
 
 
-@app.route('/api/%s/addValue/<sensorid>/<type>/<values>' % __apiversion__, methods=['GET'])
+@app.route('/api/%s/sensor/<sensorid>/addValue/<type>/<values>' % __apiversion__, methods=['GET'])
 def addValue(sensorid, type, values):
     """Add a new value, deduplicate line"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
@@ -73,9 +73,9 @@ def addValue(sensorid, type, values):
     return "ok"
 
 
-@app.route('/api/%s/sensor/<sensorid>' % __apiversion__, methods=['GET'])
+@app.route('/api/%s/sensor/<sensorid>/html' % __apiversion__, methods=['GET'])
 def SensorDatas(sensorid):
-    """List all last sensors"""
+    """List all data for sensor in HTML"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid)
     obj.tail(nb=5000)
     content = obj.convertSensorDatasTo(format='html')
