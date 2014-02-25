@@ -223,4 +223,4 @@ You can also point your web navigator to http://youipserver for list all JSON fu
    }
 
 
-You can also see the result directely in my personnal `website <http://domotique.adele.im>`_
+You can also see the result directely in my personnal `website <http://domotique.adele.im>`_ and the `wiki <http://http://wiki.serialkiller.adele.im>`_
