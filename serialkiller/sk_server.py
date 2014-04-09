@@ -19,7 +19,6 @@ from flask_failsafe import failsafe
 from serialkiller import lib
 from serialkiller import sktypes
 
-
 # Init application
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -58,7 +57,7 @@ def addEvent(sensorid, type, values):
     """Add a new event, no deduplicate"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
     params = dict(urlparse.parse_qsl(values))
-    data = lib.LineData(**params)
+    data = sktypes.newObj('nunmber', **params)
     obj.addEvent(data)
     return "ok"
 
@@ -68,7 +67,7 @@ def addValue(sensorid, type, values):
     """Add a new value, deduplicate line"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
     params = dict(urlparse.parse_qsl(values))
-    data = lib.LineData(**params)
+    data = sktypes.newObj('number', **params)
     obj.addValue(data)
     return "ok"
 
