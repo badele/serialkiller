@@ -150,8 +150,14 @@ class SkBase(object):
 
         # Convert with convert property
         if 'convert' in configs:
-            key = self.value
-            return configs['convert'][key]
+            intkey = str(int(self.value))
+            floatkey = str(self.value)
+
+            if intkey in configs['convert']:
+                return configs['convert'][intkey]
+
+            if floatkey in configs['convert']:
+                return configs['convert'][floatkey]
 
         return str(self.value)
 

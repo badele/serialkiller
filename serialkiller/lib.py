@@ -32,7 +32,7 @@ def saveto(filename, content):
 
 
 class Sensor(object):
-    def __init__(self, directory, sensorid, ptype='byte', ext=".data"):
+    def __init__(self, directory, sensorid, ptype='number', ext=".data"):
         # Check sensorid param
         ids = sensorid.split(':')
         if len(ids) != 3:
@@ -435,8 +435,8 @@ class Sensor(object):
                 if not obj.state:
                         if 'limit' in self.configs and 'limits' in self.configs['limit']:
                             if limitname in self.configs['limit']['limits']:
-                                octalprotection = obj.value.lstrip('0')
-                                test = 'float(%s) %s' % (octalprotection, self.configs['limit']['limits'][limitname])
+                                # octalprotection = obj.value.lstrip('0')
+                                test = 'float(%s) %s' % (obj.value, self.configs['limit']['limits'][limitname])
                                 result = eval(test)
 
                                 if result:

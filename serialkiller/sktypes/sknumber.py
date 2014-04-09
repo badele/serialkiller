@@ -43,7 +43,7 @@ class SkNumber(SkBase):
     def convert_value(self, value):
         result = value
 
-        if isinstance(value, str):
+        if isinstance(value, str) and len(value) > 1:
             result = result.lstrip('0')
 
         result = float(result)

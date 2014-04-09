@@ -25,21 +25,8 @@ class TestPackages(unittest.TestCase):
         # Init random
         random.seed(0)
 
-        # Boolean
-        sensorname = 'test:sensor:boolean'
-        sensorconf = '/tmp/sensors/%s.conf' % sensorname.replace(':', '/')
-        sensordata = '/tmp/sensors/%s.data' % sensorname.replace(':', '/')
-        self._reset_file(sensorconf)
-        self._reset_file(sensordata)
-        self._generate_boolean(sensorname, 1000)
-
-        # Integer
-        self._create_integer_sensor('byte', 0, 255, 1000)
-        self._create_integer_sensor('ushort', 0, 65535, 1000)
-        self._create_integer_sensor('ulong', 0, 4294967295, 1000)
-
-        # Float
-        self._create_float_sensor('float', .2250738585072014e-30, 1.7976931348623157e+30, 1000)
+        # Number
+        self._create_integer_sensor('number', 0, 4294967295, 1000)
 
     def _create_integer_sensor(self, ptype, mini, maxi, nb):
         sensorname = 'test:sensor:%s' % ptype
@@ -122,54 +109,23 @@ class TestPackages(unittest.TestCase):
         obj.tail(addmetainfo=True)
 
         self.assertEqual(obj.last().type, 'Sk%s' % ptype.capitalize())
-        self.assertGreater(obj.last().unavailable, 1392910566)
-        self.assertEqual(obj.last().metadata['computed']['unavailable'], obj.last().unavailable)
+        self.assertGreater(obj.last().unavailable, 1396747071.51)
 
-    def _check_last(self, ptype, value, text, tobinary):
+    def _check_last(self, ptype, value, text):
         sensorname = 'test:sensor:%s' % ptype
         obj = lib.Sensor('/tmp/sensors', sensorname, ptype)
         obj.tail(addmetainfo=True)
         self.assertEqual(obj.last().value, value)
         self.assertEqual(obj.last().text, text)
-        self.assertEqual(obj.last().typeToBinary(), tobinary)
 
     def test_check_integrities(self):
-        self._check_integrity('boolean', '77dcb516acf4d80055859bc8281cd14a', '7fb2b1801c064a1964901ac93c3e0b7e')
-        self._check_integrity('byte', '05b55ffe6cea75d0360a53b82c70542a', '9e2279491bf5f9afc3ab377038251c7f')
-        self._check_integrity('ushort', '7d354b63799679d4b2bdd2e915487b6f', '9e6cd5b47c6229abb7d25c6da64952d8')
-        self._check_integrity('ulong', '48e7fc3054d919cd8ff8f5ef07f5c4a4', 'f95e7b368998a0e0cfabf9c12104c1a9')
-        self._check_integrity('float', '7a916a175feaf9150f887c2183f026c8', '0c28b1b0006410d94cfe1a8ba34a0934')
+        self._check_integrity('number', '69e03aeac61f142cabdfc264198d33f5', '08e72218139d6fc9cc1723f35bb21194')
 
     def test_check_last(self):
-        self._check_last('boolean', 0, 'Off' ,'\x03\x00\x00\x00\x00\x80D\xed@\x00')
-        self._check_last('byte', 138, '138' ,'\x02\x00\x00\x00\x00\x80D\xed@\x8a')
-        self._check_last('ushort', 40295, '40295' ,'\x04\x00\x00\x00\x00\x80D\xed@g\x9d')
-        self._check_last('ulong', 130047754, '130047754' ,'\x05\x00\x00\x00\x00\x80D\xed@\n_\xc0\x07')
-        self._check_last('float', 3.210708047208364e+27, '3210708047208364204214976512.00', '\x06\x00\x00\x00\x00\x80D\xed@^\xfd%m')
+        self._check_last('number', 2935339775.0, '2935339775.0')
 
     def test_checkobj(self):
-        self._checkobj('boolean')
-        self._checkobj('byte')
-        self._checkobj('ushort')
-        self._checkobj('ulong')
-        self._checkobj('float')
-
-    def test_codebin(self):
-        codebins = []
-        for root, dirnames, filenames in os.walk('./serialkiller/sktypes'):
-            for filename in fnmatch.filter(filenames, 'sk*.py'):
-                fullname = os.path.join(root, filename)
-                lines = open(fullname).read()
-
-                m = re.search(r'self._codebin = (0x[0-9]+)', lines)
-                if m:
-                    codebins.append((m.group(1)))
-
-        # Check if the codebins not used it multiples type files
-        before = len(codebins)
-        after = len(set(codebins))
-        self.assertEqual(before, after)
-
+        self._checkobj('number')
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
