@@ -54,7 +54,7 @@ def getLastsValue(args):
     obj = lib.Sensor(args.directory, args.sensorid)
     obj.tail(nb=params['tail'])
 
-    return obj.datas
+    print obj.datas[0].toRaw()
 
 
 def sensorDatas(args):
@@ -68,19 +68,22 @@ def sensorDatas(args):
         params['format'] = 'txt'
 
     obj = lib.Sensor(args.directory, args.sensorid)
-    obj.tail(nb=params['tail'])
+    obj.tail(nb=int(params['tail']))
     content = obj.convertSensorDatasTo(**params)
 
     if 'filename' in params:
         filename = params['filename']
         lib.saveto(filename, content.encode('utf-8'))
     else:
-        print content
+        print content,
 
 
 def sensorInfos(args):
     requireSensorID(args)
     params = extractParams(args)
+
+    if 'tail' not in params:
+        params['tail'] = 1
 
     obj = lib.Sensor(args.directory, args.sensorid, args.type)
     infos = obj.SensorInfos(**params)
@@ -91,7 +94,7 @@ def sensorInfos(args):
 
     showresult = [
         ['Sensorid', args.sensorid],
-        ['Sensor Type', obj.configs['type']],
+        #['Sensor Type', obj.configs['type']],
         ['NB lines', str(infos['nblines'])],
         ['Min date', format_datetime(infos['mindate'])],
         ['Max date', format_datetime(infos['maxdate'])],
@@ -100,7 +103,7 @@ def sensorInfos(args):
         #        ['Avg size', str(infos['avgsize'])],
         ['Avg value', str(infos['avgvalue'])],
         ['Avg delta (round ratio)', str(infos['avgdelta'])],
-        ['Total size', '%s Mo' % str(infos['avgsize'] * infos['nblines'] / 1024 / 1024.0)],
+        # ['Total size', '%s Mo' % str(infos['avgsize'] * infos['nblines'] / 1024 / 1024.0)],
     ]
 
     header = ['Title', 'Value']
@@ -117,50 +120,6 @@ def sensorReduce(args):
         raise Exception('Please set roundvalue in sensor configuration')
 
     obj.reduce(**params)
-
-
-def setProperty(args):
-    requireSensorID(args)
-    requireSensorType(args)
-    obj = lib.Sensor(args.directory, args.sensorid, args.type)
-
-    params = extractParams(args)
-    obj.setConfigs(**params)
-
-
-def importSensorIds(args):
-    requireSensorID(args)
-    requireSensorType(args)
-    params = extractParams(args)
-    if 'filename' not in params:
-        print("Please set filename value")
-        sys.exit(1)
-
-    obj = lib.Sensor(args.directory, args.sensorid, args.type)
-    imported = obj.importDatas(params['filename'])
-    print "%s lines imported" % imported
-
-
-def generateGraphs(args):
-    params = extractParams(args)
-    if 'directory' not in params:
-        print("Please set -v directory=")
-        sys.exit(1)
-
-    if 'tail' not in params:
-        params['tail'] = 1000
-
-    obj = lib.SerialKillers(args.directory)
-    sensorsids = obj.getSensorsIds()
-
-    for sensorid in sensorsids:
-        print "generate graphs for %s" % sensorid
-        gen = lib.Sensor(args.directory, sensorid)
-        gen.tail(nb=params['tail'])
-        content = gen.convertSensorDatas2Html(**params)
-
-        filename = "%s/%s.html" % (params['directory'], sensorid)
-        lib.saveto(filename, content.encode('utf-8'))
 
 
 def sensorsList(args):

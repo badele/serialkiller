@@ -58,7 +58,7 @@ def addEvent(sensorid, type, values):
     """Add a new event, no deduplicate"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
     params = dict(urlparse.parse_qsl(values))
-    data = sktypes.newObj(type, **params)
+    data = lib.LineData(**params)
     obj.addEvent(data)
     return "ok"
 
@@ -68,7 +68,7 @@ def addValue(sensorid, type, values):
     """Add a new value, deduplicate line"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid, type)
     params = dict(urlparse.parse_qsl(values))
-    data = sktypes.newObj(type, **params)
+    data = lib.LineData(**params)
     obj.addValue(data)
     return "ok"
 

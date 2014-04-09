@@ -41,7 +41,7 @@ class Sensor(object):
         # Init fields
         self._directory = directory
         self._sensorid = sensorid
-        self._datas = []
+        self._lines = []
         self._file = None
         self._filename = self.getFilename(ext)
         self._configs = {}
@@ -84,10 +84,10 @@ class Sensor(object):
         return self._sensorid
 
     @property
-    def datas(self):
-        """Get datas"""
+    def lines(self):
+        """Get lines"""
 
-        return self._datas
+        return self._lines
 
     @property
     def configs(self):
@@ -135,7 +135,7 @@ class Sensor(object):
             try:
                 fcntl.flock(self._file, fcntl.LOCK_EX)
                 self._file.seek(0, 2)
-                self._file.write(obj.toBinary())
+                self._file.write(obj.rawdata)
             finally:
                 fcntl.flock(self._file, fcntl.LOCK_UN)
 
@@ -143,28 +143,32 @@ class Sensor(object):
         self.addAtEnd(obj)
 
     def addValue(self, obj):
-        self.tail(2)
-        if len(self.datas) < 2:
-            # No enough datas for compare
-            self.addAtEnd(obj)
-        else:
-            if 'roundvalue' in self.configs and self.configs['roundvalue'] != 0:
-                roundvalue = float(self.configs['roundvalue'])
-                delta0 = abs(obj.value - self.datas[0].value)
-                delta1 = abs(obj.value - self.datas[1].value)
-                samevalue = delta0 <= roundvalue and delta1 <= roundvalue
-            else:
-                samevalue = str(obj.value) == str(self.datas[0].value) and str(obj.value) == str(self.datas[1].value)
-
-            if samevalue:
-                try:
-                    fcntl.flock(self._file, fcntl.LOCK_EX)
-                    self.rewind(self._file, 1)
-                    self._file.write(obj.toBinary())
-                finally:
-                    fcntl.flock(self._file, fcntl.LOCK_UN)
-            else:
+        try:
+            fcntl.flock(self._file, fcntl.LOCK_EX)
+            self.tail(2)
+            if len(self.lines) < 2:
+                # No enough datas for compare
                 self.addAtEnd(obj)
+            else:
+                samevalue = True
+                if 'roundvalue' in self.configs:
+                    for roundname, roundvalue in self.configs['roundvalue'].iteritems():
+                        roundvalue = float(roundvalue)
+                        delta0 = abs(obj.values[roundname] - self.lines[0].values[roundname])
+                        delta1 = abs(obj.values[roundname] - self.lines[1].values[roundname])
+                        samevalue = samevalue and (delta0 <= roundvalue and delta1 <= roundvalue)
+                else:
+                    samevalue = str(obj.value) == str(self.lines[0].value) and str(obj.value) == str(self.lines[1].value)
+
+                if samevalue:
+                    self.rewind(self._file, 1)
+                    self._file.truncate()
+                    self._file.write(obj.rawdata)
+                else:
+                    self.addAtEnd(obj)
+
+        finally:
+            fcntl.flock(self._file, fcntl.LOCK_UN)
 
     def completeConfigsForType(self, configs=None):
         """Complete configs list with not seted configs"""
@@ -174,7 +178,6 @@ class Sensor(object):
         # noinspection PyProtectedMember
         for configname, value in self._typeobj._defaultconfigs.iteritems():
             if configname not in configs and '#%s' % configname not in configs:
-                # t
                 comment = ''
                 if 'comment' in value and value['comment']:
                     comment = '#'
@@ -240,43 +243,64 @@ class Sensor(object):
 
         self.saveConfigs(self._configs)
 
-    def rewind(self, fileobj, nb):
+    def readLines(self, fileobj, nb=1):
+        """
+        Source: http://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-with-python-similar-to-tail
+        :param nb:
+        :param addmetainfo:
+        :return:
+        """
+        offset = None
+        self._lines = []
 
+        # File not opened
+        if not fileobj:
+            return ""
+
+        try:
+            fcntl.flock(fileobj, fcntl.LOCK_EX)
+
+            avg_line_length = 74
+            to_read = nb + (offset or 0)
+
+            while 1:
+                try:
+                    fileobj.seek(-(avg_line_length * to_read), 2)
+                except IOError:
+                    # woops.  apparently file is smaller than what we want
+                    # to step back, go to the beginning instead
+                    fileobj.seek(0)
+
+                pos = fileobj.tell()
+                lines = fileobj.read().splitlines()
+                if len(lines) >= to_read or pos == 0:
+                    return lines[-to_read:offset and -offset or None]
+                avg_line_length *= 1.3
+
+                return ""
+
+        finally:
+            fcntl.flock(fileobj, fcntl.LOCK_UN)
+
+    def rewind(self, fileobj, nb):
         # No file
         if not fileobj:
             return 0
 
-        # Get and verify block size
-        try:
-            fcntl.flock(fileobj, fcntl.LOCK_EX)
-            fileobj.seek(-1, 2)
-            size_end = ord(fileobj.read(1))
-            fileobj.seek(-size_end, 2)
-            size_start = ord(fileobj.read(1))
-            if size_start != size_end:
-                raise Exception("No same size")
-        except:
-            return 0
-        finally:
-            fcntl.flock(fileobj, fcntl.LOCK_UN)
+        # Calc content size
+        size = 1  # first find empty line with \n
+        lines = self.readLines(fileobj, nb)
+        for line in lines:
+            size += len(line)
 
         # Rewind
         try:
             fcntl.flock(fileobj, fcntl.LOCK_EX)
-            pos = fileobj.tell()
-            for i in range(nb - 1):
-                if pos >= 0 and pos - size_start - 1 < 0:
-                    break
-
-                fileobj.seek(-size_start - 1, 1)
-                size_start = ord(fileobj.read(1))
-                pos = fileobj.tell()
-
-            fileobj.seek(-1, 1)
+            fileobj.seek(-size, 1)
         finally:
             fcntl.flock(fileobj, fcntl.LOCK_UN)
 
-        return size_start
+        return size
 
     def forward(self, fileobj, nb):
 
@@ -341,50 +365,38 @@ class Sensor(object):
     def readBlockSize(self, fileobj):
         try:
             fcntl.flock(fileobj, fcntl.LOCK_EX)
-            sizetoread = ord(fileobj.read(1))
+            sizetoread = fileobj.read(4)
             fileobj.seek(-1, 1)
         except:
             sizetoread = 0
 
         return sizetoread
 
-    def loadToDatas(self, fileobj):
-        try:
-            sizetoread = self.readBlockSize(fileobj)
-            obj = self.readObj(fileobj, sizetoread)
-            while obj:
-                self._datas.append(obj)
-                obj = self.readObj(fileobj, obj.size)
-        except TypeError:
-            pass
-
-        finally:
-            fcntl.flock(fileobj, fcntl.LOCK_UN)
-
     def tail(self, nb=1, addmetainfo=False):
-        self._datas = []
+        self._lines = []
 
-        # File not opened
-        if not self._file:
+        # Try read lines
+        lines = self.readLines(self._file, nb)
+        if len(lines) == 0:
             return 0
 
-        # Read the nb skline
-        nb = int(nb)
-        self.rewind(self._file, nb)
-        self.loadToDatas(self._file)
+        # # Read the lines
+        for line in lines:
+            obj = sktypes.newObj(self.type, rawdata=line)
+            self.lines.append(obj)
 
         # Complete extra info
         if addmetainfo:
-            self.addMetaInfo(self.datas)
+            self.addMetaInfo(self._lines)
 
         return 0
 
     def last(self):
-        size = len(self.datas)
+        size = len(self.lines)
         if size <= 0:
             return None
 
-        return self.datas[size - 1]
+        return self.lines[size - 1]
 
     def addMetaInfo(self, values):
         """Add extra infos on a minimal type object"""
@@ -420,10 +432,11 @@ class Sensor(object):
             check = ['crit', 'warn', 'succ', 'info', 'unkn']
             for limitname in check:
                 # Check crit in order 'crit', 'warn', 'succ', 'info', 'unkn'
-                if not obj.metadata['computed']['state']:
+                if not obj.state:
                         if 'limit' in self.configs and 'limits' in self.configs['limit']:
                             if limitname in self.configs['limit']['limits']:
-                                test = '%s %s' % (obj.value, self.configs['limit']['limits'][limitname])
+                                octalprotection = obj.value.lstrip('0')
+                                test = 'float(%s) %s' % (octalprotection, self.configs['limit']['limits'][limitname])
                                 result = eval(test)
 
                                 if result:
@@ -432,16 +445,12 @@ class Sensor(object):
     def datasToJSON(self):
         jsondatas = []
 
-        for d in self.datas:
-            jsondatas.append(d.metadata)
+        for d in self.lines:
+            jsondatas.append(d.value)
 
         return jsondatas
 
     def reduce(self, **kwargs):
-
-        tail = None
-        if 'tail' in kwargs:
-            tail = int(kwargs['tail'])
 
         tmpfile = None
         try:
@@ -457,19 +466,14 @@ class Sensor(object):
                 # Empty the file
                 self._file.seek(0)
                 self._file.truncate()
+                tmpfile.seek(0)
 
-                if tail:
-                    # Rewind nb lines
-                    self.rewind(tmpfile, nb=tail)
-                else:
-                    # Full file
-                    tmpfile.seek(0)
+                line = tmpfile.readline()
+                while line:
+                    data = sktypes.newObj(self.type, rawdata=line)
+                    self.addValue(data)
 
-                sizetoread = self.readBlockSize(tmpfile)
-                obj = self.readObj(tmpfile, sizetoread)
-                while obj:
-                    self.addValue(obj)
-                    obj = self.readObj(tmpfile, obj.size)
+                    line = tmpfile.readline()
 
         finally:
             fcntl.flock(self._file, fcntl.LOCK_UN)
@@ -479,71 +483,53 @@ class Sensor(object):
 
     def SensorInfos(self, **kwargs):
         """Get sensor informations"""
-        self._datas = []
+        self._lines = []
 
         tail = None
         if 'tail' in kwargs:
             tail = int(kwargs['tail'])
 
-        try:
-            fcntl.flock(self._file, fcntl.LOCK_EX)
+        self.tail(nb=tail, addmetainfo=True)
 
-            if tail:
-                # Rewind nb lines
-                self.rewind(self._file, nb=tail)
-            else:
-                # Full file
-                self._file.seek(0)
+        infos = {}
+        size = 0
+        sizesum = 0
+        valuesum = 0
+        deltasum = 0
+        minvalue = 4294967295
+        maxvalue = -4294967295
+        minvaluedate = 4294967295
+        maxvaluedate = 0
+        mindate = 4294967295
+        maxdate = 0
 
-            infos = {}
-            size = 0
-            sizesum = 0
-            valuesum = 0
-            deltasum = 0
-            minvalue = 4294967295
-            maxvalue = -4294967295
-            minvaluedate = 4294967295
-            maxvaluedate = 0
-            mindate = 4294967295
-            maxdate = 0
+        # Compute statistic
+        oldvalue = None
+        for obj in self._lines:
+            size += 1
+            #sizesum += obj.size
+            valuesum += float(obj.value)
 
-            # Get the size of first block
-            sizetoread = self.readBlockSize(self._file)
+            if oldvalue:
+                deltasum += abs(oldvalue - float(obj.value))
 
-            # Compute statistic
-            oldvalue = None
-            if sizetoread > 0:
-                obj = self.readObj(self._file, sizetoread)
-                while obj:
-                    size += 1
-                    sizesum += obj.size
-                    valuesum += obj.value
+            oldvalue = float(obj.value)
 
-                    if oldvalue:
-                        deltasum += abs(oldvalue - obj.value)
+            # Check value
+            if float(obj.value) < minvalue:
+                minvalue = float(obj.value)
+                minvaluedate = obj.time
 
-                    oldvalue = obj.value
+            if float(obj.value) > maxvalue:
+                maxvalue = float(obj.value)
+                maxvaluedate = obj.time
 
-                    # Check value
-                    if obj.value < minvalue:
-                        minvalue = obj.value
-                        minvaluedate = obj.time
+            # Check time
+            if obj.time < mindate:
+                mindate = obj.time
 
-                    if obj.value > maxvalue:
-                        maxvalue = obj.value
-                        maxvaluedate = obj.time
-
-                    # Check time
-                    if obj.time < mindate:
-                        mindate = obj.time
-
-                    if obj.time > maxdate:
-                        maxdate = obj.time
-
-                    obj = self.readObj(self._file, obj.size)
-
-        finally:
-            fcntl.flock(self._file, fcntl.LOCK_UN)
+            if obj.time > maxdate:
+                maxdate = obj.time
 
         infos['mindate'] = mindate
         infos['maxdate'] = maxdate
@@ -583,6 +569,8 @@ class Sensor(object):
         if 'format' in kwargs:
             if kwargs['format'] == 'html':
                 content = self.convertSensorDatas2Html(**kwargs)
+            elif kwargs['format'] == 'csv':
+                content = self.convertSensorDatas2CSV(**kwargs)
             else:
                 content = self.convertSensorDatas2Txt(**kwargs)
         else:
@@ -620,11 +608,19 @@ class Sensor(object):
 
     def convertSensorDatas2Txt(self, **kwargs):
         lines = []
-        for r in self.datas:
+        for r in self.lines:
             lines.append([format_datetime(r.time), r.convert2text(self.configs)])
 
         header = ['Time', 'Value']
         return tabulate(lines, headers=header)
+
+    def convertSensorDatas2CSV(self, **kwargs):
+        content = ""
+
+        for r in self._lines:
+            content += '%s,%s\n' % (r.time, r.value)
+
+        return content
 
 
 class SerialKillers(object):
@@ -656,12 +652,12 @@ class SerialKillers(object):
                 obj = Sensor(self._directory, sensor)
                 obj.tail(2, addmetainfo=True)
 
-                lsize = len(obj.datas)
+                lsize = len(obj.lines)
                 if lsize > 0:
                     idx = min(1, lsize - 1)
                     lasts[sensor] = dict()
                     lasts[sensor]['configs'] = obj.configs
-                    lasts[sensor]['last'] = obj.datas[idx]
+                    lasts[sensor]['last'] = obj.lines[idx]
             except Exception:
                 print "Exception on %s sensor" % sensor
                 raise

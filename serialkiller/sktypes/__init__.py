@@ -12,14 +12,6 @@ import time
 import struct
 from collections import defaultdict
 
-# Codebin
-# 0x2 = SkByte
-# 0x3 = SkBoolean
-# 0x4 = SkUshort
-# 0x5 = SkUlong
-# 0x6 = SkFloat
-
-
 # Load object type module
 def import_objtype(modname, name):
     impmodule = __import__(modname, fromlist=[name])
@@ -34,23 +26,17 @@ def newObj(name, **kwargs):
     return objtype(**kwargs)
 
 
-class SkDefault(object):
-    """Generic Class for type"""
+class SkBase(object):
     def __init__(self, **kwargs):
+        self._metadata = dict()
+        self._values = None
+        self._rawdata = None
 
-        # Set parameters
-        self._metadata = defaultdict(lambda: None, **kwargs)
+        if 'rawdata' in kwargs:
+            self.rawdata = kwargs['rawdata']
+        else:
+            self.values = kwargs
 
-        if 'time' not in kwargs:
-            self.time = None
-
-        if 'value' not in kwargs:
-            self.value = None
-
-        # Check if parameters is correct
-        self.checkMetadata()
-
-        self._codebin = 0x0
         self._defaultconfigs = {
             'title': {
                 'value': 'Please set title for %(sensorid)s sensor'
@@ -64,121 +50,97 @@ class SkDefault(object):
             },
         }
 
+    # Get dynamically property
+    def __getattr__(self, attr):
+        if not self._values:
+            values = self.rawdata2Values()
+            values = self.convertValues(values)
+            self._values = values
+
+        return self.values[attr]
+
     @property
     def type(self):
         """Get type"""
         return self.__class__.__name__
 
     @property
-    def codebin(self):
-        """Get codebin for use with toBinary"""
-        return self._codebin
+    def values(self):
+        """Get values"""
+
+        return self._values
+
+    @values.setter
+    def values(self, values):
+        self._values = values
+
+        if 'time' not in self._values:
+            self._values['time'] = time.time()
+
+        self.convertValues(self._values)
+        self._rawdata = self.values2rawdata(self._values)
 
     @property
-    def value(self):
-        """Get Value"""
-        return self._metadata['value']
+    def rawdata(self):
+        """Get rawdata"""
+        result = self.values2rawdata(self.values)
+        return result
 
-    @value.setter
-    def value(self, pvalue):
-        self._metadata['value'] = pvalue
-        self.checkMetadata()
+    @rawdata.setter
+    def rawdata(self, rawdata):
+        self._rawdata = rawdata
 
-    @property
-    def time(self):
-        """Get Time"""
-        return self._metadata['time']
-
-    @time.setter
-    def time(self, value):
-        if value:
-            self._metadata['time'] = float(value)
-        else:
-            self._metadata['time'] = time.time()
+        # Reset values
+        values = self.rawdata2Values(rawdata)
+        values = self.convertValues(values)
+        self._values = values
 
     @property
     def metadata(self):
-        """Get Value"""
+        """Get metadata"""
+
         return self._metadata
 
     @metadata.setter
-    def metadata(self, value):
-        self._metadata = value
+    def metadata(self, metadata):
+        self._metadata = metadata
 
-    # =======================
-    # Get Metadata properties
-    # =======================
-    @property
-    def size(self):
-        """Get Obj size"""
-        return self._metadata['size']
+    def rawdata2Values(self, rawdata):
+        values = dict()
+        datas = rawdata.split(';')
 
-    @property
-    def state(self):
-        """Get Value"""
-        return self._metadata['computed']['state']
+        # Get time value
+        values['time'] = datas[0]
 
-    @property
-    def since(self):
-        """Get Since value"""
-        return self._metadata['computed']['since']
+        # If 2 items => not named value
+        if len(datas) == 2:
+            values['value'] = datas[1]
+        # If more 2 items => named value
+        else:
+            for keyvalue in datas[1:]:
+                k, v = keyvalue.split('=')
+                values[k] = v
 
-    @property
-    def unavailable(self):
-        """Get Value"""
-        return self._metadata['computed']['unavailable']
+        return values
 
-    @property
-    def text(self):
-        """Get text"""
-        return self._metadata['computed']['text']
+    def values2rawdata(self, values):
+        rawdata = ""
 
-    # =======================
-    # Get Metadata properties
-    # =======================
+        if 'time' not in values:
+            raise Exception('Time not found in values')
 
-    @state.setter
-    def state(self, value):
-        if 'computed' not in self._metadata:
-            self._metadata['computed'] = defaultdict(lambda: None)
+        rawdata += str(self._values['time'])
+        keys = sorted(self.values.keys())
 
-        self._metadata['computed']['state'] = value
+        if 'value' in self._values:
+            rawdata += ";%s" % str(self._values['value'])
+        else:
+            # TODO: generate multiples values
+            pass
 
-    @since.setter
-    def since(self, value):
-        if 'computed' not in self._metadata:
-            self._metadata['computed'] = defaultdict(lambda: None)
+        rawdata += "\n"
 
-        self._metadata['computed']['since'] = value
-
-    @unavailable.setter
-    def unavailable(self, value):
-        if 'computed' not in self._metadata:
-            self._metadata['computed'] = defaultdict(lambda: None)
-
-        self._metadata['computed']['unavailable'] = value
-
-    @text.setter
-    def text(self, value):
-        if 'computed' not in self._metadata:
-            self._metadata['computed'] = defaultdict(lambda: None)
-
-        self._metadata['computed']['text'] = value
-
-    def toBinary(self):
-        """Convert to Binary"""
-        content = self.typeToBinary()
-        size = len(content) + 2
-        lsize = struct.pack('=B', size)
-        bline = "%s%s%s" % (lsize, content, lsize)
-
-        return bline
-
-    def checkMetadata(self):
-        #Check time format
-        if 'time' in self.metadata:
-            if type(self.time) == str:
-                self.time = float(self.time)
+        return rawdata
 
     def convert2text(self, configs):
         # Convert with format property
@@ -188,22 +150,26 @@ class SkDefault(object):
 
         # Convert with convert property
         if 'convert' in configs:
-            key = str(self.value)
+            key = self.value
             return configs['convert'][key]
-
-        # Try to convert in number
-        if self.type == 'SkFloat':
-            return "%.2f" % self.value
 
         return str(self.value)
 
-    def typeToBinary(self):
-        # noinspection PyProtectedMember
-        mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
-        raise NotImplementedError(mess)
+    def convertValues(self, values):
 
-    def decodeBinary(self, content):
-        """Convert from Binary"""
+        # Convert text time in float
+        values['time'] = float(values['time'])
+
+        # Convert others values
+        for k, v in values.iteritems():
+            values[k] = self.convert2Value(k, v)
+
+        return values
+
+    def convert2Value(self, propertyname, value):
         # noinspection PyProtectedMember
-        mess = "%s.%s" % (self.__class__, sys._getframe().f_code.co_name)
-        raise NotImplementedError(mess)
+        if 'convert_%s' % propertyname not in dir(self):
+            return value
+
+        converter = getattr(self, 'convert_%s' % propertyname)
+        return converter(value)
