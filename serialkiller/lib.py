@@ -129,6 +129,23 @@ class Sensor(object):
 
         return filename
 
+    def toJSON(self):
+        items = list()
+        for line in self.lines:
+            items.append(line.toJSON())
+
+        result = dict(
+            sensorid=self.sensorid,
+            configs=self.configs,
+            type=self.type,
+            title=self.title,
+            lines=items,
+        )
+
+        return result
+
+
+
     def addAtEnd(self, obj):
         """Add a binary data at the end of file"""
         if self._file:
@@ -200,8 +217,8 @@ class Sensor(object):
 
         exists = os.path.isfile(filename)
         if exists:
-            lines = open(filename).read()
-            configs = json.loads(lines)
+            configlines = open(filename).read()
+            configs = json.loads(configlines)
 
         if exists and update or not exists:
             oldconfig_size = len(configs)
@@ -376,12 +393,12 @@ class Sensor(object):
         self._lines = []
 
         # Try read lines
-        lines = self.readLines(self._file, nb)
-        if len(lines) == 0:
+        readline = self.readLines(self._file, nb)
+        if len(readline) == 0:
             return 0
 
         # # Read the lines
-        for line in lines:
+        for line in readline:
             obj = sktypes.newObj(self.type, rawdata=line)
             self.lines.append(obj)
 

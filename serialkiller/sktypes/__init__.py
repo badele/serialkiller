@@ -179,3 +179,15 @@ class SkBase(object):
 
         converter = getattr(self, 'convert_%s' % propertyname)
         return converter(value)
+
+    def toJSON(self):
+        result = dict(
+            type=self.type,
+            values=self.values,
+            rawdata=self.rawdata,
+            metadata=self.metadata,
+            since=self.since,
+            state=self.state,
+            unavailable=self.unavailable
+        )
+        return result

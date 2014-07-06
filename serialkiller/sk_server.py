@@ -10,6 +10,7 @@ __apiversion__ = '1.0'
 # System
 import logging
 import urlparse
+import jsonpickle
 
 # Third party
 from flask import Flask, jsonify
@@ -49,7 +50,7 @@ def lastValue(sensorid):
     """List last data for sensor in JSON"""
     obj = lib.Sensor(app.config['STORAGE'], sensorid)
     obj.tail(nb=2, addmetainfo=True)
-    return jsonify(obj.last().metadata)
+    return jsonify(obj.toJSON())
 
 
 @app.route('/api/%s/sensor/<sensorid>/addEvent/<type>/<values>' % __apiversion__, methods=['GET'])
