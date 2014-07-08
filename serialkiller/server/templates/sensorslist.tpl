@@ -19,6 +19,47 @@
 </head>
 <body>
 <style>
+    body {
+        background-color: #2B2B2B;
+        color: #dddddd;
+    }
+
+    d9d727
+    .text-info {
+        color: #4295BE;
+    }
+
+    .label-info {
+        background-color: #4295BE;
+    }
+
+    .text-warning {
+        color: #d9d727;
+    }
+
+    .label-warning {
+        background-color: #d9d727;
+    }
+
+    .text-danger {
+        color: #FF0000;
+    }
+
+
+
+    .label-danger {
+        background-color: #FF0000;
+    }
+
+    .text-success {
+        color: #00FF00;
+    }
+
+    .label-success {
+        background-color: #00FF00;
+    }
+
+
     .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td {
         border-top: 1px solid #DDDDDD;
         line-height: 0;
@@ -51,29 +92,29 @@
     </tr>
     </thead>
     <tbody>
-    {% for sensorid, sensor in lasts.items()|sort %}
+    {% for sensorid, sensor in sensors.items()|sort %}
     <tr>
-        {% if state[sensor['last'].state] %}
+        {% if sensor.state %}
         <td>
-            {% if 'limit' in sensor['configs'] and 'icons' in sensor['configs']['limit'] %}
-            <i class="fa {{sensor['configs']['limit']['icons'][sensor['last'].state] }} fa-fw"></i>&nbsp;
+            {% if 'limit' in sensor.configs and 'icons' in sensor.configs['limit'] %}
+            <i class="fa {{sensor.configs['limit']['icons'][sensor['last'].state] }} fa-fw"></i>&nbsp;
             {% endif %}
-            <span class="{% if 'limit' in sensor['configs'] and 'styles' in sensor['configs']['limit'] %}{{sensor['configs']['limit']['styles'][sensor['last'].state] }}{% endif%}">
-               {{ sensor['last'].text }}
+            <span class="{% if 'limit' in sensor.configs and 'styles' in sensor.configs['limit'] %}{{sensor.configs['limit']['styles'][sensor['last'].state] }}{% endif%}">
+               {{ sensor.last.text }}
             </span>
         </td>
         {% else %}
-        <td><i class="fa fa-square-o fa-fw"></i>&nbsp;{{ sensor['last'].text }}</td>
+        <td><i class="fa fa-square-o fa-fw"></i>&nbsp;{{ sensor.last.text }}</td>
         {% endif %}
-        <td>{{ sensor['last'].since|sincetime }}</td>
-        <td>{{ sensor['configs']['title'] }}</td>
-        {% if sensor['last'].unavailable %}
-        <td><span>{{ sensor['last'].time|datetime }}</span><i class="fa fa-warning fa-fw"></i></td>
+        <td>{{ sensor.last.since|sincetime }}</td>
+        <td>{{ sensor.configs['title'] }}</td>
+        {% if sensor.unavailable %}
+        <td><span>{{ sensor.last.time|datetime }}</span><i class="text-danger fa fa-warning fa-fw"></i></td>
         {% else %}
-        <td>{{ sensor['last'].time|datetime }}</td>
+        <td>{{ sensor.last.time|datetime }}</td>
         {% endif %}
         <td><a href="/{{ sensorid }}.html">{{ sensorid }}</a></td>
-        <td>{{ sensor['configs'].type }}</td>
+        <td>{{ sensor.configs.type }}</td>
     </tr>
     {% endfor %}
     </tbody>

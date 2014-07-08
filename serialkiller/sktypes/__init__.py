@@ -28,9 +28,9 @@ def newObj(name, **kwargs):
 
 class SkBase(object):
     def __init__(self, **kwargs):
-        self._metadata = dict()
         self._values = None
         self._rawdata = None
+        self._state = ''
 
         if 'rawdata' in kwargs:
             self.rawdata = kwargs['rawdata']
@@ -65,6 +65,12 @@ class SkBase(object):
         return self.__class__.__name__
 
     @property
+    def state(self):
+        """Get state"""
+
+        return self._state
+
+    @property
     def values(self):
         """Get values"""
 
@@ -94,16 +100,6 @@ class SkBase(object):
         values = self.rawdata2Values(rawdata)
         values = self.convertValues(values)
         self._values = values
-
-    @property
-    def metadata(self):
-        """Get metadata"""
-
-        return self._metadata
-
-    @metadata.setter
-    def metadata(self, metadata):
-        self._metadata = metadata
 
     def rawdata2Values(self, rawdata):
         values = dict()
@@ -184,10 +180,9 @@ class SkBase(object):
         result = dict(
             type=self.type,
             values=self.values,
+            text=self.text,
             rawdata=self.rawdata,
-            metadata=self.metadata,
             since=self.since,
-            state=self.state,
-            unavailable=self.unavailable
+            state=self.state
         )
         return result

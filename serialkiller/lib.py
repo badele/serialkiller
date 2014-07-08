@@ -45,6 +45,7 @@ class Sensor(object):
         self._file = None
         self._filename = self.getFilename(ext)
         self._configs = {}
+        self._unavailable = None
 
         # Create node directory
         self.createNodeDirectories()
@@ -95,6 +96,23 @@ class Sensor(object):
 
         return self._configs
 
+
+    @property
+    def state(self):
+        """Get state"""
+        nbvalues = len(self._lines)
+        lastvalue = self._lines[nbvalues-1]
+
+        return lastvalue.state
+
+
+    @property
+    def unavailable(self):
+        """Get unavailable"""
+
+        return self._unavailable
+
+
     @property
     def type(self):
         """Get type"""
@@ -140,6 +158,8 @@ class Sensor(object):
             type=self.type,
             title=self.title,
             lines=items,
+            state=self.state,
+            unavailable=self._unavailable
         )
 
         return result
@@ -408,6 +428,7 @@ class Sensor(object):
 
         return 0
 
+    @property
     def last(self):
         size = len(self.lines)
         if size <= 0:
@@ -415,41 +436,31 @@ class Sensor(object):
 
         return self.lines[size - 1]
 
-    def addMetaInfo(self, values):
+    def addMetaInfo(self, sensorvalues):
         """Add extra infos on a minimal type object"""
-        for idx in range(len(values)):
-            obj = values[idx]
+
+        nbvalues = len(sensorvalues)
+        for idx in range(nbvalues):
+            obj = sensorvalues[idx]
 
             # Add configs information
-            obj.metadata['configs'] = self.configs
+            #obj.metadata['configs'] = self.configs
 
             # Convert value in text
             obj.text = obj.convert2text(self.configs)
 
             # Check same value since
             if idx > 0:
-                obj.since = values[idx].time - values[idx - 1].time
+                obj.since = sensorvalues[idx].time - sensorvalues[idx - 1].time
             else:
                 obj.since = None
 
-            # Check if unavailable data
-            unavailableconf = 600
-            obj.unavailable = None
-            if 'unavailable' in self.configs:
-                unavailableconf = float(self.configs['unavailable'])
-
-            now = time.time()
-            delta = now - obj.time
-            obj.unavailable = None
-            if delta >= unavailableconf:
-                obj.unavailable = delta
-
             # check limitation state
-            obj.state = ''
+            obj._state = ''
             check = ['crit', 'warn', 'succ', 'info', 'unkn']
             for limitname in check:
                 # Check crit in order 'crit', 'warn', 'succ', 'info', 'unkn'
-                if not obj.state:
+                if not obj._state:
                         if 'limit' in self.configs and 'limits' in self.configs['limit']:
                             if limitname in self.configs['limit']['limits']:
                                 # octalprotection = obj.value.lstrip('0')
@@ -457,7 +468,20 @@ class Sensor(object):
                                 result = eval(test)
 
                                 if result:
-                                    obj.state = limitname
+                                    obj._state = limitname
+
+        # Check if unavailable data
+        unavailableconf = 600
+        if 'unavailable' in self.configs:
+            unavailableconf = float(self.configs['unavailable'])
+
+        now = time.time()
+        lastvalue = sensorvalues[nbvalues-1]
+        delta = now - lastvalue.time
+        self._unavailable = None
+        if delta >= unavailableconf:
+            self._unavailable = delta
+
 
     def datasToJSON(self):
         jsondatas = []
@@ -663,23 +687,17 @@ class SerialKillers(object):
         return matches
 
     def getLastSensorsValue(self):
-        lasts = dict()
-        for sensor in self.getSensorsIds():
+        sensors = dict()
+        for sensorid in self.getSensorsIds():
             try:
-                obj = Sensor(self._directory, sensor)
+                obj = Sensor(self._directory, sensorid)
                 obj.tail(2, addmetainfo=True)
-
-                lsize = len(obj.lines)
-                if lsize > 0:
-                    idx = min(1, lsize - 1)
-                    lasts[sensor] = dict()
-                    lasts[sensor]['configs'] = obj.configs
-                    lasts[sensor]['last'] = obj.lines[idx]
+                sensors[sensorid] = obj
             except Exception:
-                print "Exception on %s sensor" % sensor
+                print "Exception on %s sensor" % sensorid
                 raise
 
-        return lasts
+        return sensors
 
     def convertSensorsListTo(self, **kwargs):
         # Convert
@@ -694,10 +712,10 @@ class SerialKillers(object):
         return content
 
     def convertSensorsList2Txt(self):
-        lasts = self.getLastSensorsValue()
+        sensors = self.getLastSensorsValue()
 
         lines = []
-        for sensorid, value in iter(sorted(lasts.iteritems())):
+        for sensorid, value in iter(sorted(sensors.iteritems())):
             state = ''
             last = value['last']
 
@@ -714,7 +732,7 @@ class SerialKillers(object):
 
     def convertSensorsList2Html(self):
         # Get lasts values
-        lasts = self.getLastSensorsValue()
+        sensors = self.getLastSensorsValue()
 
         pydir = os.path.dirname(os.path.realpath(__file__))
         tplfile = '%s/server/templates/sensorslist.tpl' % pydir
@@ -728,10 +746,11 @@ class SerialKillers(object):
 
         template = tplenv.get_template(os.path.abspath(tplfile))
 
+
         # Render
         content = template.render(
             {
-                'lasts': lasts,
+                'sensors': sensors,
                 'generated_time': time.time(),
                 'state': {
                     'info': 'info',
@@ -746,9 +765,9 @@ class SerialKillers(object):
         return content
 
     def autosetSensors(self):
-        lasts = self.getLastSensorsValue()
+        sensors = self.getLastSensorsValue()
 
-        for k, v in lasts.iteritems():
+        for k, v in sensors.iteritems():
             if 'state' in v:
                 if v['state'] == 'unkn':
                     print "AUTOFLAG FOR %s" % k
