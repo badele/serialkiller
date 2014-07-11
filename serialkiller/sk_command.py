@@ -160,8 +160,8 @@ def extractParams(args):
         return dict()
 
     params = {}
-    for v in args.value:
-        k, v = v.split('=')
+    for values in args.value:
+        k, v = values.split('=')
         params[k] = v
 
     return params
