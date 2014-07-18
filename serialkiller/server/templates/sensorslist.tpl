@@ -108,10 +108,14 @@
         {% endif %}
         <td>{{ sensor.last.since|sincetime }}</td>
         <td>{{ sensor.configs['title'] }}</td>
-        {% if sensor.unavailable %}
-        <td><span>{{ sensor.last.time|datetime }}</span><i class="text-danger fa fa-warning fa-fw"></i></td>
+        {% if sensor.last%}
+            {% if sensor.unavailable %}
+                <td><span>{{ sensor.last.time|datetime }}</span><i class="text-danger fa fa-warning fa-fw"></i></td>
+            {% else %}
+                <td>{{ sensor.last.time|datetime }}</td>
+            {% endif %}
         {% else %}
-        <td>{{ sensor.last.time|datetime }}</td>
+            <td><i class="text-danger fa fa-warning fa-fw"></i></td>
         {% endif %}
         <td><a href="/{{ sensorid }}.html">{{ sensorid }}</a></td>
         <td>{{ sensor.configs.type }}</td>
