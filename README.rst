@@ -4,10 +4,10 @@
 .. image:: https://coveralls.io/repos/badele/serialkiller/badge.png
    :target: https://coveralls.io/r/badele/serialkiller
 
-.. disableimage:: https://pypip.in/v/serialkiller/badge.png
+.. disableimage:: https://img.shields.io/pypi/v/serialkiller.svg
    :target: https://crate.io/packages/serialkiller/
 
-.. disableimage:: https://pypip.in/d/serialkiller/badge.png
+.. disableimage:: https://img.shields.io/pypi/dm/serialkiller.svg
    :target: https://crate.io/packages/serialkiller/
 
 .. figure:: screenshot.png
